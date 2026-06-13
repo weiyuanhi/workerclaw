@@ -102,6 +102,7 @@ import {
   readSessionTitleFieldsFromTranscriptAsync,
   readSessionTitleFieldsFromTranscript,
 } from "./session-utils.fs.js";
+import { extractTitleCandidateFromMessage } from "./session-title.js";
 import type {
   GatewayAgentRow,
   GatewaySessionRow,
@@ -243,8 +244,10 @@ export function deriveSessionTitle(
   }
 
   if (firstUserMessage?.trim()) {
-    const normalized = firstUserMessage.replace(/\s+/g, " ").trim();
-    return truncateTitle(normalized, DERIVED_TITLE_MAX_LEN);
+    const candidate = extractTitleCandidateFromMessage(firstUserMessage);
+    if (candidate) {
+      return truncateTitle(candidate, DERIVED_TITLE_MAX_LEN);
+    }
   }
 
   if (entry.sessionId) {

@@ -55,6 +55,7 @@ function createProps(overrides: Partial<SkillsProps> = {}): SkillsProps {
   return {
     connected: true,
     loading: false,
+    configForm: null,
     report,
     error: null,
     filter: "",
@@ -414,6 +415,47 @@ describe("renderSkills", () => {
     expect(chips.map((chip) => normalizeText(chip))).toContain("Unavailable");
     expect(chips.some((chip) => normalizeText(chip) === "Clean")).toBe(false);
     expect(verdictChip?.classList.contains("chip-ok")).toBe(false);
+  });
+
+  it("renders workspace playbooks in a separate group", async () => {
+    const container = document.createElement("div");
+    document.body.append(container);
+    dialogRestores.push(() => container.remove());
+
+    render(
+      renderSkills(
+        createProps({
+          report: {
+            workspaceDir: "/tmp/workspace",
+            managedSkillsDir: "/tmp/skills",
+            skills: [
+              createSkill({
+                name: "hello-world",
+                skillKey: "hello-world",
+                source: "openclaw-workspace",
+                baseDir: "/tmp/workspace/skills/hello-world",
+                filePath: "/tmp/workspace/skills/hello-world/SKILL.md",
+              }),
+              createSkill({
+                name: "fill-purchase-order",
+                skillKey: "fill-purchase-order",
+                source: "openclaw-workspace",
+                baseDir: "/tmp/workspace/skills/playbooks/fill-purchase-order",
+                filePath: "/tmp/workspace/skills/playbooks/fill-purchase-order/SKILL.md",
+              }),
+            ],
+          },
+        }),
+      ),
+      container,
+    );
+    await Promise.resolve();
+
+    const headers = Array.from(container.querySelectorAll(".agent-skills-header span")).map(
+      (node) => normalizeText(node),
+    );
+    expect(headers).toContain("Workspace Skills");
+    expect(headers).toContain("Workspace Playbooks");
   });
 });
 

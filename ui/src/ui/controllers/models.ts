@@ -12,6 +12,25 @@ type ModelCatalogCacheEntry = {
 
 const modelCatalogCache = new WeakMap<GatewayBrowserClient, ModelCatalogCacheEntry>();
 
+export function invalidateModelCatalogCache(client: GatewayBrowserClient): void {
+  modelCatalogCache.delete(client);
+}
+
+export async function refreshConfiguredModelCatalog(state: {
+  client: GatewayBrowserClient | null;
+  connected: boolean;
+  chatModelCatalog: ModelCatalogEntry[];
+}): Promise<ModelCatalogEntry[]> {
+  if (!state.client || !state.connected) {
+    state.chatModelCatalog = [];
+    return [];
+  }
+  invalidateModelCatalogCache(state.client);
+  const models = await loadModels(state.client);
+  state.chatModelCatalog = models;
+  return models;
+}
+
 /**
  * Fetch the model catalog from the gateway.
  *

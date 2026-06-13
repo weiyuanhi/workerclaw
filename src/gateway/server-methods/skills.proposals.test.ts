@@ -305,6 +305,40 @@ describe("skills proposal gateway handlers", () => {
     );
   });
 
+  it("starts skill draft chat turns with visible message and server-built context", async () => {
+    const result = await callHandler("skills.proposals.requestDraftSkill", {
+      message: "Create a skill from our conversation.",
+      sessionKey: "agent:main:session:chat",
+      targetAgentId: "draft-target",
+      idempotencyKey: "skill-draft-run-1",
+    });
+
+    expect(result).toMatchObject({
+      ok: true,
+      response: { runId: "run-skill-workshop-revision", status: "started" },
+    });
+    expect(mocks.chatSend).toHaveBeenCalledTimes(1);
+    const forwarded = mocks.chatSend.mock.calls[0]?.[0] as {
+      params?: Record<string, unknown>;
+      req?: { method?: string; params?: Record<string, unknown> };
+    };
+    expect(forwarded.req?.method).toBe("chat.send");
+    expect(forwarded.params).toMatchObject({
+      agentId: "draft-target",
+      deliver: false,
+      idempotencyKey: "skill-draft-run-1",
+      message: "Create a skill from our conversation.",
+      sessionKey: "agent:main:session:chat",
+      suppressCommandInterpretation: true,
+    });
+    expect(String(forwarded.params?.systemProvenanceReceipt)).toContain(
+      "Use `skill_workshop` with `action=create` (default category=skill).",
+    );
+    expect(String(forwarded.params?.systemProvenanceReceipt)).not.toContain(
+      "Create a skill from our conversation.",
+    );
+  });
+
   it("does not start revision chat turns for non-pending proposals", async () => {
     const create = await callHandler("skills.proposals.create", {
       name: "Applied Sampler",

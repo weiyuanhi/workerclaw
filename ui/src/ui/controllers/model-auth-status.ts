@@ -51,3 +51,10 @@ export async function loadModelAuthStatusState(
     state.modelAuthStatusLoading = false;
   }
 }
+
+export async function logoutModelProvider(
+  client: GatewayBrowserClient,
+  provider: string,
+): Promise<void> {
+  await client.request("models.authLogout", { provider });
+}

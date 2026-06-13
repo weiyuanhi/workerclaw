@@ -7,10 +7,25 @@ import type { GatewayRequestHandlerOptions } from "./types.js";
 
 const mocks = vi.hoisted(() => ({
   listChannelPlugins: vi.fn(),
+  getChannelPlugin: vi.fn(),
+  resolveWebLoginChannelPlugin: vi.fn(),
+  buildWebLoginUnsupportedMessage: vi.fn(
+    () => "web login is not supported for channel openclaw-weixin",
+  ),
 }));
 
 vi.mock("../../channels/plugins/index.js", () => ({
   listChannelPlugins: mocks.listChannelPlugins,
+  getChannelPlugin: mocks.getChannelPlugin,
+}));
+
+vi.mock("./web-login-channel.js", () => ({
+  resolveWebLoginChannelPlugin: mocks.resolveWebLoginChannelPlugin,
+  buildWebLoginUnsupportedMessage: mocks.buildWebLoginUnsupportedMessage,
+}));
+
+vi.mock("./web-login-qr.js", () => ({
+  normalizeWebLoginQrResult: vi.fn(async (result: { qrDataUrl?: string; message: string }) => result),
 }));
 
 import { webHandlers } from "./web.js";
@@ -180,6 +195,56 @@ describe("webHandlers web.login.start", () => {
       undefined,
     );
   });
+
+  it("routes login start to an explicit channel when channel is provided", async () => {
+    const loginWithQrStart = vi.fn().mockResolvedValue({
+      qrDataUrl: "https://example.com/weixin-qr.png",
+      message: "scan weixin qr",
+      sessionKey: "session-1",
+    });
+    mocks.resolveWebLoginChannelPlugin.mockReturnValue({
+      id: "openclaw-weixin",
+      gateway: { loginWithQrStart },
+    });
+    const respond = vi.fn();
+
+    await webHandlers["web.login.start"](
+      createOptions(
+        { channel: "openclaw-weixin" },
+        {
+          respond,
+          context: {
+            stopChannel: vi.fn(),
+            startChannel: vi.fn(),
+            getRuntimeSnapshot: vi.fn(createRunningWhatsappSnapshot),
+            getRuntimeConfig: vi.fn(() => ({
+              channels: { "openclaw-weixin": { enabled: true } },
+            })),
+          },
+        },
+      ),
+    );
+
+    expect(mocks.resolveWebLoginChannelPlugin).toHaveBeenCalledWith({
+      channelInput: "openclaw-weixin",
+      cfg: { channels: { "openclaw-weixin": { enabled: true } } },
+    });
+    expect(loginWithQrStart).toHaveBeenCalledWith({
+      accountId: undefined,
+      force: false,
+      timeoutMs: undefined,
+      verbose: false,
+    });
+    expect(respond).toHaveBeenCalledWith(
+      true,
+      {
+        qrDataUrl: "https://example.com/weixin-qr.png",
+        message: "scan weixin qr",
+        sessionKey: "session-1",
+      },
+      undefined,
+    );
+  });
 });
 
 describe("webHandlers web.login.wait", () => {
@@ -229,6 +294,7 @@ describe("webHandlers web.login.wait", () => {
       accountId: "default",
       timeoutMs: 5000,
       currentQrDataUrl: "data:image/png;base64,current-qr",
+      sessionKey: undefined,
     });
     expect(respond).toHaveBeenCalledWith(
       true,

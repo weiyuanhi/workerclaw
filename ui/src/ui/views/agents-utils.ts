@@ -7,7 +7,11 @@ import {
 } from "../../../../src/agents/tool-policy-shared.js";
 import { t } from "../../i18n/index.ts";
 import { DEFAULT_ASSISTANT_AVATAR } from "../assistant-identity.ts";
-import { buildQualifiedChatModelValue } from "../chat-model-ref.ts";
+import {
+  buildCatalogDisplayLookup,
+  buildChatModelOptionFromLookup,
+  formatCatalogChatModelDisplay,
+} from "../chat-model-ref.ts";
 import { controlUiPublicAssetPath } from "../public-assets.ts";
 import { normalizeLowercaseStringOrEmpty, normalizeOptionalString } from "../string-coerce.ts";
 import type {
@@ -669,6 +673,8 @@ type ConfiguredModelOption = {
   label: string;
 };
 
+export type ModelSelectOption = ConfiguredModelOption;
+
 function resolveConfiguredModels(
   configForm: Record<string, unknown> | null,
 ): ConfiguredModelOption[] {
@@ -695,15 +701,13 @@ function resolveConfiguredModels(
   return options;
 }
 
-export function buildModelOptions(
+export function listModelSelectOptions(
   configForm: Record<string, unknown> | null,
   current?: string | null,
   catalog?: ModelCatalogEntry[],
-  selected?: string | null,
-) {
+): ModelSelectOption[] {
   const seen = new Set<string>();
-  const options: ConfiguredModelOption[] = [];
-  const selectedKey = selected ? normalizeLowercaseStringOrEmpty(selected) : null;
+  const options: ModelSelectOption[] = [];
   const addOption = (value: string, label: string) => {
     const key = normalizeLowercaseStringOrEmpty(value);
     if (seen.has(key)) {
@@ -718,18 +722,33 @@ export function buildModelOptions(
   }
 
   if (catalog) {
+    const displayLookup = buildCatalogDisplayLookup(catalog);
     for (const entry of catalog) {
-      const provider = entry.provider?.trim();
-      const value = buildQualifiedChatModelValue(entry.id, provider);
-      const label = provider ? `${entry.id} · ${provider}` : entry.id;
-      addOption(value, label);
+      const option = buildChatModelOptionFromLookup(entry, displayLookup);
+      addOption(option.value, option.label);
     }
   }
 
   if (current && !seen.has(normalizeLowercaseStringOrEmpty(current))) {
-    options.unshift({ value: current, label: `Current (${current})` });
+    const display =
+      formatCatalogChatModelDisplay(current, catalog ?? []) || current;
+    options.unshift({
+      value: current,
+      label: t("modelPicker.currentNamed", { model: display }),
+    });
   }
 
+  return options;
+}
+
+export function buildModelOptions(
+  configForm: Record<string, unknown> | null,
+  current?: string | null,
+  catalog?: ModelCatalogEntry[],
+  selected?: string | null,
+) {
+  const selectedKey = selected ? normalizeLowercaseStringOrEmpty(selected) : null;
+  const options = listModelSelectOptions(configForm, current, catalog);
   if (options.length === 0) {
     return nothing;
   }

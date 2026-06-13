@@ -50,6 +50,7 @@ import {
   loadModelAuthStatusState,
   type ModelAuthStatusState,
 } from "./controllers/model-auth-status.ts";
+import { refreshConfiguredModelCatalog } from "./controllers/models.ts";
 import { loadNodes, type NodesState } from "./controllers/nodes.ts";
 import { loadPresence, type PresenceState } from "./controllers/presence.ts";
 import { loadSessions, type SessionsState } from "./controllers/sessions.ts";
@@ -164,6 +165,7 @@ type SettingsAppHost = SettingsHost &
     overviewLogLines: string[];
     attentionItems: AttentionItem[];
     hello: { auth?: { role?: string; scopes?: string[] } } | null;
+    chatModelCatalog: import("./types.ts").ModelCatalogEntry[];
   };
 
 export function applySettings(host: SettingsHost, next: UiSettings) {
@@ -430,7 +432,11 @@ export async function refreshActiveTab(host: SettingsHost, opts?: { chatStartup?
       case "infrastructure":
       case "aiAgents":
         {
-          const primaryRefresh = loadConfig(app);
+          const primaryRefresh = Promise.all([
+            loadConfig(app),
+            loadModelAuthStatusState(app),
+            refreshConfiguredModelCatalog(app),
+          ]);
           loadConfigSchemaAfterPrimary(host, app, primaryRefresh);
           await primaryRefresh;
         }

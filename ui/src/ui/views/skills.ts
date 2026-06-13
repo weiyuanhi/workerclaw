@@ -15,7 +15,11 @@ import { toSanitizedMarkdownHtml } from "../markdown.ts";
 import { resolveSafeExternalUrl } from "../open-external-url.ts";
 import { normalizeLowercaseStringOrEmpty } from "../string-coerce.ts";
 import type { SkillStatusEntry, SkillStatusReport } from "../types.ts";
-import { groupSkills, resolveSkillGroupLabel } from "./skills-grouping.ts";
+import {
+  groupSkills,
+  resolvePlaybooksSubdirFromConfig,
+  resolveSkillGroupLabel,
+} from "./skills-grouping.ts";
 import {
   computeSkillMissing,
   computeSkillReasons,
@@ -50,6 +54,7 @@ export type SkillDetailTab = "overview" | "card";
 export type SkillsProps = {
   connected: boolean;
   loading: boolean;
+  configForm: Record<string, unknown> | null;
   report: SkillStatusReport | null;
   error: string | null;
   filter: string;
@@ -202,7 +207,9 @@ export function renderSkills(props: SkillsProps) {
         ).includes(filter),
       )
     : afterStatus;
-  const groups = groupSkills(filtered);
+  const groups = groupSkills(filtered, {
+    playbooksSubdir: resolvePlaybooksSubdirFromConfig(props.configForm),
+  });
 
   const detailSkill = props.detailKey
     ? (skills.find((s) => s.skillKey === props.detailKey) ?? null)

@@ -109,8 +109,13 @@ import {
   resetGroundedShortTerm,
   resetDreamDiary,
   resolveConfiguredDreaming,
-  updateDreamingEnabled,
+  updateDreamingSettings,
 } from "./controllers/dreaming.ts";
+import {
+  buildDreamingSettingsPatch,
+  createDefaultDreamingSettingsDraft,
+  resolveDreamingSettingsFromConfig,
+} from "./dreaming-settings.ts";
 import {
   loadExecApprovals,
   removeExecApprovalsFormValue,
@@ -118,6 +123,11 @@ import {
   updateExecApprovalsFormValue,
 } from "./controllers/exec-approvals.ts";
 import { loadLogs } from "./controllers/logs.ts";
+import {
+  loadModelAuthStatusState,
+  logoutModelProvider,
+} from "./controllers/model-auth-status.ts";
+import { refreshConfiguredModelCatalog } from "./controllers/models.ts";
 import { loadNodes } from "./controllers/nodes.ts";
 import { loadPresence } from "./controllers/presence.ts";
 import {
@@ -196,12 +206,13 @@ import { renderCommandPalette } from "./views/command-palette.ts";
 import { getPresetById } from "./views/config-presets.ts";
 import { renderQuickSettings, type QuickSettingsChannel } from "./views/config-quick.ts";
 import { renderConfig, type ConfigProps } from "./views/config.ts";
+import { buildModelProviderRemovalFormPatches } from "./views/config-form-provider-sync.ts";
 import {
   renderCronQuickCreate,
   createDefaultDraft,
   draftToCronFormPatch,
 } from "./views/cron-quick-create.ts";
-import { renderDreamingRestartConfirmation } from "./views/dreaming-restart-confirmation.ts";
+import { renderDreamingSettingsModal } from "./views/dreaming-restart-confirmation.ts";
 import { renderDreaming } from "./views/dreaming.ts";
 import { renderExecApprovalPrompt } from "./views/exec-approval.ts";
 import { renderGatewayUrlConfirmation } from "./views/gateway-url-confirmation.ts";
@@ -1416,47 +1427,48 @@ export function renderApp(state: AppViewState) {
       ...(updatedAt ? { updatedAt } : {}),
     };
   };
-  const applyDreamingEnabled = (enabled: boolean) => {
+  const openDreamingSettings = () => {
     if (
       state.dreamingModeSaving ||
       state.dreamingRestartConfirmLoading ||
-      state.dreamingRestartConfirmOpen ||
-      dreamingOn === enabled
+      state.dreamingRestartConfirmOpen
     ) {
       return;
     }
-    state.dreamingPendingEnabled = enabled;
+    state.dreamingSettingsDraft = resolveDreamingSettingsFromConfig(configValue);
     state.dreamingRestartConfirmOpen = true;
     state.dreamingStatusError = null;
   };
-  const cancelDreamingRestart = () => {
+  const cancelDreamingSettings = () => {
     if (state.dreamingRestartConfirmLoading) {
       return;
     }
     state.dreamingRestartConfirmOpen = false;
-    state.dreamingPendingEnabled = null;
+    state.dreamingSettingsDraft = null;
     state.dreamingStatusError = null;
   };
-  const confirmDreamingRestart = () => {
-    const enabled = state.dreamingPendingEnabled;
-    if (enabled == null || state.dreamingRestartConfirmLoading) {
+  const confirmDreamingSettings = () => {
+    const draft = state.dreamingSettingsDraft;
+    if (!draft || state.dreamingRestartConfirmLoading) {
       return;
     }
     void (async () => {
       state.dreamingRestartConfirmLoading = true;
       state.dreamingStatusError = null;
       try {
-        const updated = await updateDreamingEnabled(state, enabled);
+        const { pluginId } = resolveConfiguredDreaming(configValue);
+        const patch = buildDreamingSettingsPatch(pluginId, draft);
+        const updated = await updateDreamingSettings(state, patch);
         if (!updated) {
           if (!state.dreamingStatusError) {
-            state.dreamingStatusError = t("dreaming.restartConfirmation.failed");
+            state.dreamingStatusError = t("dreaming.settingsModal.failed");
           }
           return;
         }
         await loadConfig(state);
         await loadDreamingStatus(state);
         state.dreamingRestartConfirmOpen = false;
-        state.dreamingPendingEnabled = null;
+        state.dreamingSettingsDraft = null;
       } finally {
         state.dreamingRestartConfirmLoading = false;
       }
@@ -1596,7 +1608,13 @@ export function renderApp(state: AppViewState) {
     onReload: () => void loadConfig(state, { discardPendingChanges: true }),
     onReset: () => resetConfigPendingChanges(state),
     onSave: () => void saveConfig(state),
-    onApply: () => void applyConfig(state),
+    onApply: () =>
+      void applyConfig(state).then(async (applied) => {
+        if (applied && state.client && state.connected) {
+          await refreshConfiguredModelCatalog(state);
+          requestHostUpdate();
+        }
+      }),
     onUpdate: () => void runUpdate(state),
     onOpenFile: () => void openConfigFile(state),
     version: state.hello?.server?.version ?? "",
@@ -1627,6 +1645,24 @@ export function renderApp(state: AppViewState) {
       typeof state.configSnapshot?.raw === "string" ||
       Boolean(state.configSnapshot?.config) ||
       Boolean(state.configForm),
+    modelAuthProviders: state.modelAuthStatusResult?.providers,
+    modelCatalog: state.chatModelCatalog ?? [],
+    onRemoveModelProvider: async (providerId: string) => {
+      for (const patch of buildModelProviderRemovalFormPatches(state.configForm, providerId)) {
+        updateConfigFormValue(state, patch.path, patch.value);
+      }
+      if (!state.client || !state.connected) {
+        return;
+      }
+      try {
+        await logoutModelProvider(state.client, providerId);
+      } catch {
+        // Env/static credentials may not have removable auth profiles.
+      }
+      await loadModelAuthStatusState(state, { refresh: true });
+      await refreshConfiguredModelCatalog(state);
+      requestHostUpdate();
+    },
   } satisfies Omit<
     ConfigProps,
     | "formMode"
@@ -1897,6 +1933,10 @@ export function renderApp(state: AppViewState) {
             whatsappQrDataUrl: state.whatsappLoginQrDataUrl,
             whatsappConnected: state.whatsappLoginConnected,
             whatsappBusy: state.whatsappBusy,
+            weixinLoginMessage: state.weixinLoginMessage,
+            weixinLoginQrUrl: state.weixinLoginQrUrl,
+            weixinLoginSessionKey: state.weixinLoginSessionKey,
+            weixinBusy: state.weixinBusy,
             configSchema: state.configSchema,
             configSchemaLoading: state.configSchemaLoading,
             configForm: state.configForm,
@@ -1909,9 +1949,12 @@ export function renderApp(state: AppViewState) {
             onWhatsAppStart: (force) => void state.handleWhatsAppStart(force),
             onWhatsAppWait: () => void state.handleWhatsAppWait(),
             onWhatsAppLogout: () => void state.handleWhatsAppLogout(),
+            onWeixinStart: (force) => void state.handleWeixinStart(force),
+            onWeixinWait: () => void state.handleWeixinWait(),
             onConfigPatch: (path, value) => updateConfigFormValue(state, path, value),
             onConfigSave: () => void state.handleChannelConfigSave(),
             onConfigReload: () => void state.handleChannelConfigReload(),
+            onRequestUpdate: requestHostUpdate,
             onNostrProfileEdit: (accountId, profile) =>
               state.handleNostrProfileEdit(accountId, profile),
             onNostrProfileCancel: () => state.handleNostrProfileCancel(),
@@ -2482,7 +2525,9 @@ export function renderApp(state: AppViewState) {
                             ? "dreams__phase-toggle--on"
                             : ""}"
                           ?disabled=${dreamingLoading}
-                          @click=${() => applyDreamingEnabled(!dreamingOn)}
+                          title=${t("dreaming.settingsModal.open")}
+                          aria-label=${t("dreaming.settingsModal.open")}
+                          @click=${openDreamingSettings}
                         >
                           <span class="dreams__phase-toggle-dot"></span>
                           <span class="dreams__phase-toggle-label">
@@ -3240,6 +3285,7 @@ export function renderApp(state: AppViewState) {
               m.renderSkills({
                 connected: state.connected,
                 loading: state.skillsLoading,
+                configForm: state.configForm,
                 report: state.skillsReport,
                 error: state.skillsError,
                 filter: state.skillsFilter,
@@ -3578,6 +3624,11 @@ export function renderApp(state: AppViewState) {
                     state.chatSideResult = null;
                   },
                   onNewSession: () => void createChatSession(state, { source: "user" }),
+                  onRequestDraftSkill: () => void state.handleRequestDraftSkill(),
+                  canRequestDraftSkill:
+                    state.connected &&
+                    !state.chatSending &&
+                    state.chatMessages.length > 0,
                   onRequestDraftPlaybook: () => void state.handleRequestDraftPlaybook(),
                   canRequestDraftPlaybook:
                     state.connected &&
@@ -3794,11 +3845,19 @@ export function renderApp(state: AppViewState) {
           : nothing}
       </main>
       ${renderExecApprovalPrompt(state)} ${renderGatewayUrlConfirmation(state)}
-      ${renderDreamingRestartConfirmation({
+      ${renderDreamingSettingsModal({
         open: state.dreamingRestartConfirmOpen,
         loading: state.dreamingRestartConfirmLoading,
-        onConfirm: confirmDreamingRestart,
-        onCancel: cancelDreamingRestart,
+        draft:
+          state.dreamingSettingsDraft ??
+          createDefaultDreamingSettingsDraft({ enabled: dreamingOn }),
+        configForm: configValue,
+        modelCatalog: state.chatModelCatalog ?? [],
+        onDraftChange: (draft) => {
+          state.dreamingSettingsDraft = draft;
+        },
+        onConfirm: confirmDreamingSettings,
+        onCancel: cancelDreamingSettings,
         hasError: Boolean(state.dreamingStatusError),
       })}
       ${nothing}

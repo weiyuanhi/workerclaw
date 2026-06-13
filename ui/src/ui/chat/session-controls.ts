@@ -32,6 +32,7 @@ import {
 import { normalizeLowercaseStringOrEmpty, normalizeOptionalString } from "../string-coerce.ts";
 import {
   formatInheritedThinkingLabel,
+  formatThinkingLevelDisplayLabel,
   formatThinkingOverrideLabel,
   normalizeThinkingOptionValue,
 } from "../thinking-labels.ts";
@@ -833,7 +834,8 @@ async function refreshVisibleToolsEffectiveForCurrentSessionLazy(state: AppViewS
 }
 
 export function renderChatModelSelect(state: AppViewState) {
-  const { currentOverride, defaultLabel, options } = resolveChatModelSelectState(state);
+  const { currentOverride, defaultDisplay, defaultLabel, options } =
+    resolveChatModelSelectState(state);
   const thinking = resolveChatThinkingSelectState(state);
   const fastMode = resolveChatFastModeSelectState(state, currentOverride);
   const busy =
@@ -853,18 +855,27 @@ export function renderChatModelSelect(state: AppViewState) {
     currentOverride === ""
       ? defaultLabel
       : (options.find((entry) => entry.value === currentOverride)?.label ?? currentOverride);
+  const selectedModelCompact =
+    currentOverride === ""
+      ? defaultDisplay || t("chat.selectors.defaultModel")
+      : selectedLabel;
   const selectedThinkingLabel =
     thinking.currentOverride === ""
       ? thinking.defaultLabel
       : (thinking.options.find((entry) => entry.value === thinking.currentOverride)?.label ??
         thinking.currentOverride);
+  const selectedThinkingCompact =
+    thinking.currentOverride === ""
+      ? formatThinkingLevelDisplayLabel(thinking.defaultLevel)
+      : selectedThinkingLabel;
   const modelOptions = [{ value: "", label: defaultLabel }, ...options];
   return renderChatModelReasoningSelect({
     disabled,
+    defaultModelDisplay: defaultDisplay,
     modelOptions,
-    selectedModelLabel: selectedLabel,
+    selectedModelCompact,
     selectedModelValue: currentOverride,
-    selectedThinkingLabel,
+    selectedThinkingCompact,
     selectedThinkingValue: thinking.currentOverride,
     fastMode,
     thinkingDisabled,
@@ -883,6 +894,7 @@ type ChatThinkingSelectOption = {
 type ChatThinkingSelectState = {
   currentOverride: string;
   defaultLabel: string;
+  defaultLevel: string;
   options: ChatThinkingSelectOption[];
 };
 
@@ -1077,41 +1089,34 @@ export function resolveChatThinkingSelectState(state: AppViewState): ChatThinkin
   return {
     currentOverride: effectiveOverride,
     defaultLabel: formatInheritedThinkingLabel(defaultLevel),
+    defaultLevel,
     options: buildThinkingOptions(levels, effectiveOverride),
   };
-}
-
-function formatCombinedPickerModelLabel(label: string): string {
-  const match = /^Default \((.+)\)$/u.exec(label);
-  return match?.[1] ?? label;
 }
 
 function formatCombinedPickerModelOptionLabel(
   option: ChatInlineSelectOption,
   selected: boolean,
+  defaultModelDisplay: string,
 ): string {
-  return option.value === "" && selected
-    ? formatCombinedPickerModelLabel(option.label)
-    : option.label;
-}
-
-function formatCombinedPickerThinkingLabel(label: string): string {
-  return label.replace(/^Inherited:\s*/u, "");
+  if (option.value !== "" || !selected) {
+    return option.label;
+  }
+  return defaultModelDisplay || t("chat.selectors.defaultModel");
 }
 
 function formatCombinedPickerThinkingOptionLabel(option: ChatInlineSelectOption): string {
-  return option.value === ""
-    ? t("chat.selectors.defaultOption")
-    : formatCombinedPickerThinkingLabel(option.label);
+  return option.value === "" ? t("chat.selectors.defaultOption") : option.label;
 }
 
 function renderChatModelReasoningSelect(params: {
+  defaultModelDisplay: string;
   fastMode: ChatFastModeSelectState;
   disabled: boolean;
   modelOptions: ChatInlineSelectOption[];
-  selectedModelLabel: string;
+  selectedModelCompact: string;
   selectedModelValue: string;
-  selectedThinkingLabel: string;
+  selectedThinkingCompact: string;
   selectedThinkingValue: string;
   thinkingDisabled: boolean;
   thinkingOptions: ChatInlineSelectOption[];
@@ -1120,12 +1125,13 @@ function renderChatModelReasoningSelect(params: {
   onThinkingSelect: (value: string) => Promise<unknown>;
 }) {
   const {
+    defaultModelDisplay,
     disabled,
     fastMode,
     modelOptions,
-    selectedModelLabel,
+    selectedModelCompact,
     selectedModelValue,
-    selectedThinkingLabel,
+    selectedThinkingCompact,
     selectedThinkingValue,
     thinkingDisabled,
     thinkingOptions,
@@ -1133,9 +1139,7 @@ function renderChatModelReasoningSelect(params: {
     onModelSelect,
     onThinkingSelect,
   } = params;
-  const triggerModel = formatCombinedPickerModelLabel(selectedModelLabel);
-  const triggerThinking = formatCombinedPickerThinkingLabel(selectedThinkingLabel);
-  const triggerLabel = `${triggerModel} · ${triggerThinking}`;
+  const triggerLabel = `${selectedModelCompact} · ${selectedThinkingCompact}`;
   return html`
     <details class="chat-controls__session chat-controls__inline-select chat-controls__model">
       <summary
@@ -1194,7 +1198,7 @@ function renderChatModelReasoningSelect(params: {
                       await onModelSelect(entry.value);
                     }}
                   >
-                    <span>${formatCombinedPickerModelOptionLabel(entry, selected)}</span>
+                    <span>${formatCombinedPickerModelOptionLabel(entry, selected, defaultModelDisplay)}</span>
                     ${selected
                       ? html`<span
                           class="chat-controls__inline-select-check chat-controls__combined-model-arrow"

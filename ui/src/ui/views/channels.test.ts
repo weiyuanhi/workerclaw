@@ -8,6 +8,8 @@ import {
   resolveChannelDisplayState,
 } from "./channels.shared.ts";
 import type { ChannelsProps } from "./channels.types.ts";
+import { resolveChannelsPageOrder } from "./channels-page-order.ts";
+import { renderChannels } from "./channels.ts";
 import { renderWhatsAppCard } from "./channels.whatsapp.ts";
 
 function createProps(snapshot: ChannelsProps["snapshot"]): ChannelsProps {
@@ -21,6 +23,10 @@ function createProps(snapshot: ChannelsProps["snapshot"]): ChannelsProps {
     whatsappQrDataUrl: null,
     whatsappConnected: null,
     whatsappBusy: false,
+    weixinLoginMessage: null,
+    weixinLoginQrUrl: null,
+    weixinLoginSessionKey: null,
+    weixinBusy: false,
     configSchema: null,
     configSchemaLoading: false,
     configForm: null,
@@ -33,6 +39,8 @@ function createProps(snapshot: ChannelsProps["snapshot"]): ChannelsProps {
     onWhatsAppStart: () => {},
     onWhatsAppWait: () => {},
     onWhatsAppLogout: () => {},
+    onWeixinStart: () => {},
+    onWeixinWait: () => {},
     onConfigPatch: () => {},
     onConfigSave: () => {},
     onConfigReload: () => {},
@@ -160,6 +168,53 @@ describe("channel display selectors", () => {
     expect(displayState.connected).toBeNull();
     expect(channelEnabled("quietchat", props)).toBe(false);
   });
+
+  it("treats config-only channels as configured and enabled", () => {
+    const props = createProps({
+      ts: Date.now(),
+      channelOrder: ["telegram"],
+      channelLabels: { telegram: "Telegram" },
+      channels: { telegram: { configured: true } },
+      channelAccounts: {},
+      channelDefaultAccountId: {},
+    });
+    props.configForm = {
+      channels: {
+        "openclaw-weixin": { enabled: true },
+      },
+    };
+
+    expect(resolveChannelConfigured("openclaw-weixin", props)).toBe(true);
+    expect(channelEnabled("openclaw-weixin", props)).toBe(true);
+    expect(resolveChannelsPageOrder(props)).toContain("openclaw-weixin");
+  });
+});
+
+describe("renderChannels", () => {
+  it("renders configured WeChat when it is missing from the gateway snapshot", () => {
+    const props = createProps({
+      ts: Date.now(),
+      channelOrder: ["telegram"],
+      channelLabels: { telegram: "Telegram" },
+      channels: { telegram: { configured: true } },
+      channelAccounts: {},
+      channelDefaultAccountId: {},
+    });
+    props.configForm = {
+      channels: {
+        "openclaw-weixin": { enabled: true },
+      },
+    };
+    props.configUiHints = {
+      "channels.openclaw-weixin": { label: "WeChat" },
+    };
+
+    const container = document.createElement("div");
+    render(renderChannels(props), container);
+
+    expect(container.textContent).toContain("WeChat");
+    expect(container.textContent).toContain("Show QR");
+  });
 });
 
 describe("WhatsApp card actions", () => {
@@ -170,7 +225,7 @@ describe("WhatsApp card actions", () => {
       onWhatsAppStart,
     });
 
-    expect(labels).toEqual(["Save", "Reload", "Show QR", "Logout", "Refresh"]);
+    expect(labels).toEqual(["Edit", "Save", "Reload", "Show QR", "Logout", "Refresh"]);
 
     const showQr = buttons.find((button) => button.textContent?.trim() === "Show QR");
     expect(showQr).toBeInstanceOf(HTMLButtonElement);
@@ -185,7 +240,7 @@ describe("WhatsApp card actions", () => {
       onWhatsAppStart,
     });
 
-    expect(labels).toEqual(["Save", "Reload", "Relink", "Logout", "Refresh"]);
+    expect(labels).toEqual(["Edit", "Save", "Reload", "Relink", "Logout", "Refresh"]);
 
     const relink = buttons.find((button) => button.textContent?.trim() === "Relink");
     expect(relink).toBeInstanceOf(HTMLButtonElement);
@@ -199,6 +254,6 @@ describe("WhatsApp card actions", () => {
       qrDataUrl: "data:image/png;base64,current-qr",
     });
 
-    expect(labels).toEqual(["Save", "Reload", "Show QR", "Wait for scan", "Logout", "Refresh"]);
+    expect(labels).toEqual(["Edit", "Save", "Reload", "Show QR", "Wait for scan", "Logout", "Refresh"]);
   });
 });

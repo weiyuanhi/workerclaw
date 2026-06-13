@@ -159,6 +159,23 @@ describe("lazy protocol validators", () => {
     ).toBe(false);
   });
 
+  it("validates Skill Workshop skill draft request params", () => {
+    expect(
+      protocol.validateSkillsProposalRequestDraftSkillParams({
+        message: "Create a skill from our conversation.",
+        sessionKey: "agent:main:session:chat",
+        idempotencyKey: "skill-draft-run-1",
+      }),
+    ).toBe(true);
+    expect(
+      protocol.validateSkillsProposalRequestDraftSkillParams({
+        message: "",
+        sessionKey: "agent:main:session:chat",
+        idempotencyKey: "skill-draft-run-1",
+      }),
+    ).toBe(false);
+  });
+
   it("validates Skill Workshop revision request params", () => {
     expect(
       protocol.validateSkillsProposalRequestRevisionParams({

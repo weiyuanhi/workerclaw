@@ -3,8 +3,14 @@ import { html, nothing } from "lit";
 import { t } from "../../i18n/index.ts";
 import { icons } from "../icons.ts";
 import { normalizeLowercaseStringOrEmpty } from "../string-coerce.ts";
-import type { ConfigUiHints } from "../types.ts";
+import type { ConfigUiHints, ModelAuthStatusProvider, ModelCatalogEntry } from "../types.ts";
 import { matchesNodeSearch, parseConfigSearchQuery, renderNode } from "./config-form.node.ts";
+import { bindConfigFormRequestUpdate } from "./config-form-provider-modal.ts";
+import { renderModelProviderCreateModal } from "./config-form-provider-modal.render.ts";
+import { renderModelProviderEditModal } from "./config-form-provider-edit.render.ts";
+import { bindModelProvidersMapContext } from "./config-form-providers-map.ts";
+import { bindChannelConfigRequestUpdate } from "./channels-config-modal.ts";
+import { renderChannelConfigEditModal } from "./channels-config-modal.render.ts";
 import { hintForPath, humanize, schemaType, type JsonSchema } from "./config-form.shared.ts";
 
 export type ConfigFormProps = {
@@ -21,6 +27,10 @@ export type ConfigFormProps = {
   isSensitivePathRevealed?: (path: Array<string | number>) => boolean;
   onToggleSensitivePath?: (path: Array<string | number>) => void;
   onPatch: (path: Array<string | number>, value: unknown) => void;
+  onRequestUpdate?: () => void;
+  modelAuthProviders?: ModelAuthStatusProvider[];
+  modelCatalog?: ModelCatalogEntry[];
+  onRemoveModelProvider?: (providerId: string) => void | Promise<void>;
 };
 
 // SVG Icons for section cards (Lucide-style)
@@ -318,6 +328,7 @@ export const SECTION_META: Record<string, { label: string; description: string }
   browser: { label: "Browser", description: "Browser automation settings" },
   ui: { label: "UI", description: "User interface preferences" },
   models: { label: "Models", description: "AI model configurations and providers" },
+  memory: { label: "Memory", description: "Memory backend, search, citations, and QMD settings" },
   bindings: { label: "Bindings", description: "Key bindings and shortcuts" },
   broadcast: { label: "Broadcast", description: "Broadcast and notification settings" },
   audio: { label: "Audio", description: "Audio input/output settings" },
@@ -378,6 +389,13 @@ function matchesSearch(params: {
 }
 
 export function renderConfigForm(props: ConfigFormProps) {
+  bindConfigFormRequestUpdate(props.onRequestUpdate);
+  bindChannelConfigRequestUpdate(props.onRequestUpdate);
+  bindModelProvidersMapContext({
+    authProviders: props.modelAuthProviders,
+    modelCatalog: props.modelCatalog,
+    onRemoveProvider: props.onRemoveModelProvider,
+  });
   if (!props.schema) {
     return html` <div class="muted">${t("configPage.form.schemaUnavailable")}</div> `;
   }
@@ -535,5 +553,8 @@ export function renderConfigForm(props: ConfigFormProps) {
             });
           })}
     </div>
+    ${renderModelProviderCreateModal()}
+    ${renderModelProviderEditModal()}
+    ${renderChannelConfigEditModal()}
   `;
 }

@@ -826,6 +826,7 @@ export const ChannelsStartParamsSchema = Type.Object(
 /** Starts browser/web login for a channel account. */
 export const WebLoginStartParamsSchema = Type.Object(
   {
+    channel: Type.Optional(NonEmptyString),
     force: Type.Optional(Type.Boolean()),
     timeoutMs: Type.Optional(Type.Integer({ minimum: 0 })),
     verbose: Type.Optional(Type.Boolean()),
@@ -842,8 +843,10 @@ const QrDataUrlSchema = Type.String({
 /** Waits for web login completion or the next QR code. */
 export const WebLoginWaitParamsSchema = Type.Object(
   {
+    channel: Type.Optional(NonEmptyString),
     timeoutMs: Type.Optional(Type.Integer({ minimum: 0 })),
     accountId: Type.Optional(Type.String()),
+    sessionKey: Type.Optional(Type.String()),
     currentQrDataUrl: Type.Optional(QrDataUrlSchema),
   },
   { additionalProperties: false },

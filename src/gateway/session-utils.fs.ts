@@ -16,6 +16,7 @@ import { estimateStringChars, estimateTokensFromChars } from "../utils/cjk-chars
 import { stripInlineDirectiveTagsForDisplay } from "../utils/directive-tags.js";
 import { extractToolCallNames, hasToolCall } from "../utils/transcript-tools.js";
 import { stripEnvelope } from "./chat-sanitize.js";
+import { extractTitleCandidateFromMessage } from "./session-title.js";
 import { resolveSessionTranscriptCandidates } from "./session-transcript-files.fs.js";
 import {
   readSessionTranscriptIndex,
@@ -1034,6 +1035,7 @@ function extractFirstUserMessageFromTranscriptChunk(
   opts?: { includeInterSession?: boolean },
 ): string | null {
   const lines = chunk.split(/\r?\n/).slice(0, MAX_LINES_TO_SCAN);
+  let fallback: string | null = null;
   for (const line of lines) {
     if (!line.trim()) {
       continue;
@@ -1048,14 +1050,18 @@ function extractFirstUserMessageFromTranscriptChunk(
         continue;
       }
       const text = extractTextFromContent(msg.content);
-      if (text) {
+      if (!text) {
+        continue;
+      }
+      fallback ??= text;
+      if (extractTitleCandidateFromMessage(text)) {
         return text;
       }
     } catch {
       // skip malformed lines
     }
   }
-  return null;
+  return fallback;
 }
 
 function findExistingTranscriptPath(

@@ -23,6 +23,7 @@ import {
   type JsonSchema,
 } from "./config-form.shared.ts";
 import { analyzeConfigSchema, renderConfigForm, resolveConfigSectionMeta } from "./config-form.ts";
+import { renderMemoryConfigSection } from "./config-memory.ts";
 
 function localizedBorderRadiusLabel(stop: BorderRadiusStop): string {
   switch (stop) {
@@ -132,6 +133,9 @@ export type ConfigProps = {
   onWebPushUnsubscribe?: () => void;
   onWebPushTest?: () => void;
   onRequestUpdate?: () => void;
+  modelAuthProviders?: import("../types.ts").ModelAuthStatusProvider[];
+  modelCatalog?: import("../types.ts").ModelCatalogEntry[];
+  onRemoveModelProvider?: (providerId: string) => void | Promise<void>;
 };
 
 // SVG Icons for sidebar (Lucide-style)
@@ -1852,7 +1856,17 @@ export function renderConfig(props: ConfigProps) {
                             <span>${t("configPage.loadingSchema")}</span>
                           </div>
                         `
-                      : renderConfigForm({
+                      : props.activeSection === "memory" && !props.searchQuery.trim()
+                        ? renderMemoryConfigSection({
+                            schema: analysis.schema,
+                            uiHints: props.uiHints,
+                            value: props.formValue,
+                            disabled: props.loading || !props.formValue,
+                            unsupportedPaths: analysis.unsupportedPaths,
+                            onPatch: props.onFormPatch,
+                            onSectionChange: props.onSectionChange,
+                          })
+                        : renderConfigForm({
                           schema: analysis.schema,
                           uiHints: props.uiHints,
                           value: props.formValue,
@@ -1870,6 +1884,10 @@ export function renderConfig(props: ConfigProps) {
                             toggleSensitivePathReveal(path);
                             requestUpdate();
                           },
+                          onRequestUpdate: requestUpdate,
+                          modelAuthProviders: props.modelAuthProviders,
+                          modelCatalog: props.modelCatalog,
+                          onRemoveModelProvider: props.onRemoveModelProvider,
                         })}
                   `
                 : (() => {

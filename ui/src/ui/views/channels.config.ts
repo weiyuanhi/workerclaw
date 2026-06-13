@@ -1,8 +1,10 @@
 // Control UI view renders channels screen content.
-import { html } from "lit";
+import { html, nothing } from "lit";
 import { t } from "../../i18n/index.ts";
 import type { ConfigUiHints } from "../types.ts";
 import { formatChannelExtraValue, resolveChannelConfigValue } from "./channel-config-extras.ts";
+import { openChannelConfigModal } from "./channels-config-modal.ts";
+import { buildChannelConfigSummaryRows } from "./channels-config-summary.ts";
 import type { ChannelsProps } from "./channels.types.ts";
 import { analyzeConfigSchema, renderNode, schemaType, type JsonSchema } from "./config-form.ts";
 
@@ -14,6 +16,25 @@ type ChannelConfigFormProps = {
   disabled: boolean;
   onPatch: (path: Array<string | number>, value: unknown) => void;
 };
+
+export function resolveChannelSchemaNode(
+  schema: JsonSchema | null,
+  channelId: string,
+): JsonSchema | null {
+  if (!schema || schemaType(schema) !== "object" || !schema.properties) {
+    return null;
+  }
+  const channelsNode = schema.properties.channels;
+  if (!channelsNode || schemaType(channelsNode) !== "object") {
+    return null;
+  }
+  const channelNode = channelsNode.properties?.[channelId];
+  if (channelNode) {
+    return channelNode;
+  }
+  const additional = channelsNode.additionalProperties;
+  return additional && typeof additional === "object" ? additional : null;
+}
 
 function resolveSchemaNode(
   schema: JsonSchema | null,
@@ -113,33 +134,92 @@ export function renderChannelConfigForm(props: ChannelConfigFormProps) {
   `;
 }
 
-export function renderChannelConfigSection(params: { channelId: string; props: ChannelsProps }) {
-  const { channelId, props } = params;
-  const disabled = props.configSaving || props.configSchemaLoading;
+function renderChannelConfigSummaryList(params: {
+  channelId: string;
+  channelLabel: string;
+  props: ChannelsProps;
+  disabled: boolean;
+}) {
+  const { channelId, channelLabel, props, disabled } = params;
+  const rows = buildChannelConfigSummaryRows({
+    channelId,
+    configForm: props.configForm,
+    hints: props.configUiHints,
+  });
+  const schemaAvailable = Boolean(resolveChannelSchemaNode(analyzeConfigSchema(props.configSchema).schema, channelId));
+
   return html`
-    <div style="margin-top: 16px;">
-      ${props.configSchemaLoading
-        ? html` <div class="muted">${t("channels.config.loadingSchema")}</div> `
-        : renderChannelConfigForm({
-            channelId,
-            configValue: props.configForm,
-            schema: props.configSchema,
-            uiHints: props.configUiHints,
-            disabled,
-            onPatch: props.onConfigPatch,
-          })}
-      <div class="row" style="margin-top: 12px;">
+    <div class="cfg-map cfg-map--channel-config" style="margin-top: 16px;">
+      <div class="cfg-map__header">
+        <span class="cfg-map__label">${t("channels.config.sectionLabel")}</span>
         <button
-          class="btn primary"
-          ?disabled=${disabled || !props.configFormDirty}
-          @click=${() => props.onConfigSave()}
+          type="button"
+          class="btn btn--sm"
+          data-channel-config-edit=${channelId}
+          ?disabled=${disabled || !schemaAvailable}
+          @click=${() => {
+            openChannelConfigModal({
+              channelId,
+              channelLabel,
+              configValue: props.configForm,
+              schema: props.configSchema,
+              uiHints: props.configUiHints,
+              disabled,
+              onPatch: props.onConfigPatch,
+            });
+            props.onRequestUpdate?.();
+          }}
         >
-          ${props.configSaving ? t("common.saving") : t("common.save")}
-        </button>
-        <button class="btn" ?disabled=${disabled} @click=${() => props.onConfigReload()}>
-          ${t("common.reload")}
+          ${t("channels.config.editConfig")}
         </button>
       </div>
+
+      ${props.configSchemaLoading
+        ? html`<div class="cfg-map__empty">${t("channels.config.loadingSchema")}</div>`
+        : rows.length === 0
+          ? html`<div class="cfg-map__empty">${t("channels.config.noConfig")}</div>`
+          : html`
+              <div class="cfg-map__items cfg-map__items--channel-config">
+                ${rows.map(
+                  (row) => html`
+                    <div class="cfg-map__item cfg-channel-config-row" data-field=${row.key}>
+                      <div class="cfg-channel-config-row__label">${row.label}</div>
+                      <div class="cfg-channel-config-row__value">${row.value}</div>
+                    </div>
+                  `,
+                )}
+              </div>
+            `}
+    </div>
+  `;
+}
+
+export function renderChannelConfigSection(params: {
+  channelId: string;
+  channelLabel?: string;
+  props: ChannelsProps;
+}) {
+  const { channelId, props } = params;
+  const disabled = props.configSaving || props.configSchemaLoading;
+  const channelLabel =
+    params.channelLabel ??
+    props.snapshot?.channelLabels?.[channelId] ??
+    props.snapshot?.channelMeta?.find((entry) => entry.id === channelId)?.label ??
+    channelId;
+
+  return html`
+    ${renderChannelConfigSummaryList({ channelId, channelLabel, props, disabled })}
+    <div class="row" style="margin-top: 12px;">
+      <button
+        class="btn primary"
+        ?disabled=${disabled || !props.configFormDirty}
+        @click=${() => props.onConfigSave()}
+      >
+        ${props.configSaving ? t("common.saving") : t("common.save")}
+      </button>
+      <button class="btn" ?disabled=${disabled} @click=${() => props.onConfigReload()}>
+        ${t("common.reload")}
+      </button>
     </div>
   `;
 }

@@ -614,13 +614,6 @@
       "count": 1,
       "kind": "html-text",
       "name": "text",
-      "path": "ui/src/ui/views/channels.ts",
-      "text": "Refreshing channel status in the background; showing the last successful snapshot."
-    },
-    {
-      "count": 1,
-      "kind": "html-text",
-      "name": "text",
       "path": "ui/src/ui/views/chat.ts",
       "text": "&times;"
     },
@@ -714,13 +707,6 @@
       "name": "text",
       "path": "ui/src/ui/views/config-form.node.ts",
       "text": "Add"
-    },
-    {
-      "count": 1,
-      "kind": "html-text",
-      "name": "text",
-      "path": "ui/src/ui/views/config-form.node.ts",
-      "text": "Add Entry"
     },
     {
       "count": 1,
@@ -840,6 +826,13 @@
       "name": "description",
       "path": "ui/src/ui/views/config-form.render.ts",
       "text": "Log levels and output configuration"
+    },
+    {
+      "count": 1,
+      "kind": "object-property",
+      "name": "description",
+      "path": "ui/src/ui/views/config-form.render.ts",
+      "text": "Memory backend, search, citations, and QMD settings"
     },
     {
       "count": 1,
@@ -1078,6 +1071,13 @@
       "name": "label",
       "path": "ui/src/ui/views/config-form.render.ts",
       "text": "MCP"
+    },
+    {
+      "count": 1,
+      "kind": "object-property",
+      "name": "label",
+      "path": "ui/src/ui/views/config-form.render.ts",
+      "text": "Memory"
     },
     {
       "count": 1,
@@ -1533,6 +1533,13 @@
       "name": "label",
       "path": "ui/src/ui/views/skills-grouping.ts",
       "text": "Other Skills"
+    },
+    {
+      "count": 1,
+      "kind": "object-property",
+      "name": "label",
+      "path": "ui/src/ui/views/skills-grouping.ts",
+      "text": "Workspace Playbooks"
     },
     {
       "count": 1,

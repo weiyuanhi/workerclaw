@@ -529,10 +529,13 @@ describe("config view", () => {
     });
 
     expect(
-      Array.from(container.querySelectorAll(".cfg-field__label")).map((label) =>
-        label.textContent?.trim(),
+      Array.from(container.querySelectorAll(".cfg-channel-row[data-channel-id='telegram'] .cfg-provider-row__title")).map(
+        (label) => label.textContent?.trim(),
       ),
     ).toEqual(["Telegram"]);
+    expect(
+      container.querySelector("[data-channel-config-edit='telegram']")?.textContent?.trim(),
+    ).toBe("Edit");
   });
 
   it("renders and wires the search field controls", () => {

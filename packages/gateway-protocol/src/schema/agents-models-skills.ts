@@ -807,6 +807,14 @@ export const SkillsProposalRequestDraftPlaybookParamsSchema = Type.Object(
 export const SkillsProposalRequestDraftPlaybookResultSchema =
   SkillsProposalRequestRevisionResultSchema;
 
+/** Starts an agent turn that drafts a workspace skill proposal from the current session. */
+export const SkillsProposalRequestDraftSkillParamsSchema =
+  SkillsProposalRequestDraftPlaybookParamsSchema;
+
+/** Chat-run acknowledgement returned after queueing a skill draft request. */
+export const SkillsProposalRequestDraftSkillResultSchema =
+  SkillsProposalRequestDraftPlaybookResultSchema;
+
 /** Shared approve/reject/quarantine action payload for one proposal. */
 export const SkillsProposalActionParamsSchema = Type.Object(
   {

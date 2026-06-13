@@ -3,7 +3,9 @@ import { resolveControlUiAuthHeader } from "./control-ui-auth.ts";
 import {
   loadChannels,
   logoutWhatsApp,
+  runWeixinLoginFlow,
   startWhatsAppLogin,
+  waitWeixinLogin,
   waitWhatsAppLogin,
   type ChannelsState,
 } from "./controllers/channels.ts";
@@ -21,6 +23,16 @@ type ChannelsActionHost = ChannelsState &
     nostrProfileFormState: NostrProfileFormState;
     nostrProfileAccountId: string | null;
   };
+
+export async function handleWeixinStart(host: ChannelsActionHost, force: boolean) {
+  await runWeixinLoginFlow(host as ChannelsState, force);
+  await loadChannels(host as ChannelsState, true);
+}
+
+export async function handleWeixinWait(host: ChannelsActionHost) {
+  await waitWeixinLogin(host as ChannelsState);
+  await loadChannels(host as ChannelsState, true);
+}
 
 export async function handleWhatsAppStart(host: ChannelsActionHost, force: boolean) {
   await startWhatsAppLogin(host as ChannelsState, force);

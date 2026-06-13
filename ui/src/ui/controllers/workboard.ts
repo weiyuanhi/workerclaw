@@ -1598,6 +1598,7 @@ function sessionTitle(session: GatewaySessionRow, recentUserText: string | null)
   const title =
     normalizeString(session.label) ??
     normalizeString(session.displayName) ??
+    normalizeString(session.derivedTitle) ??
     recentUserText ??
     session.key;
   return clampSessionCaptureTitle(title);

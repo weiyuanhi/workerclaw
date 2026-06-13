@@ -1184,3 +1184,32 @@ export async function updateDreamingEnabled(
   }
   return ok;
 }
+
+export async function updateDreamingSettings(
+  state: DreamingState,
+  patch: Record<string, unknown>,
+): Promise<boolean> {
+  if (state.dreamingModeSaving) {
+    return false;
+  }
+  if (!state.configSnapshot?.hash) {
+    state.dreamingStatusError = "Config hash missing; refresh and retry.";
+    return false;
+  }
+  const { pluginId } = resolveConfiguredDreaming(asRecord(state.configSnapshot?.config) ?? null);
+  if (!(await ensureDreamingPathSupported(state, pluginId))) {
+    return false;
+  }
+  const ok = await writeDreamingPatch(state, patch);
+  if (ok && state.dreamingStatus) {
+    const dreaming = asRecord(
+      asRecord(asRecord(asRecord(patch.plugins)?.entries)?.[pluginId])?.config,
+    )?.dreaming;
+    const enabled = normalizeBoolean(asRecord(dreaming)?.enabled, state.dreamingStatus.enabled);
+    state.dreamingStatus = {
+      ...state.dreamingStatus,
+      enabled,
+    };
+  }
+  return ok;
+}

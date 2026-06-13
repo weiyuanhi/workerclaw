@@ -206,6 +206,7 @@ function createState(overrides: Partial<AppViewState> = {}): AppViewState {
     execApprovalQueue: [],
     dreamingRestartConfirmOpen: false,
     dreamingRestartConfirmLoading: false,
+    dreamingSettingsDraft: null,
     dreamingStatusError: null,
     client: null,
     refreshSessionsAfterChat: new Map(),

@@ -10,6 +10,7 @@ import {
   validateSkillsProposalCreateParams,
   validateSkillsProposalInspectParams,
   validateSkillsProposalRequestDraftPlaybookParams,
+  validateSkillsProposalRequestDraftSkillParams,
   validateSkillsProposalRequestRevisionParams,
   validateSkillsProposalReviseParams,
   validateSkillsProposalsListParams,
@@ -144,6 +145,18 @@ function buildPlaybookDraftAgentInstruction() {
   ].join("\n");
 }
 
+function buildSkillDraftAgentInstruction() {
+  return [
+    "Draft a Skill Workshop skill proposal from the recent conversation in this session.",
+    "",
+    "Use `skill_workshop` with `action=create` (default category=skill).",
+    "Infer a concise skill name and description from the reusable capability or tool guidance in this conversation.",
+    "Include clear when-to-use guidance and instructions in `proposal_content`.",
+    "Do not apply, approve, reject, quarantine, or install unless the user explicitly asks.",
+    "If the conversation is unclear or too trivial for a durable skill, ask one short clarifying question instead.",
+  ].join("\n");
+}
+
 const SKILL_PROPOSAL_RESPONSE_HANDLED = Symbol("skill proposal response handled");
 
 async function runSkillsProposalWorkspaceHandler<TParams, TResult>(params: {
@@ -209,7 +222,7 @@ async function forwardSkillWorkshopRevisionToChatSend(
   });
 }
 
-async function forwardPlaybookDraftToChatSend(
+async function forwardSkillWorkshopDraftToChatSend(
   opts: GatewayRequestHandlerOptions,
   params: {
     agentId: string;
@@ -218,6 +231,7 @@ async function forwardPlaybookDraftToChatSend(
     sessionId?: string;
     sessionKey: string;
     targetAgentId?: string;
+    systemProvenanceReceipt: string;
   },
 ): Promise<void> {
   const { chatHandlers } = await import("./chat.js");
@@ -231,7 +245,7 @@ async function forwardPlaybookDraftToChatSend(
     ...(params.sessionId ? { sessionId: params.sessionId } : {}),
     message: params.message,
     deliver: false,
-    systemProvenanceReceipt: buildPlaybookDraftAgentInstruction(),
+    systemProvenanceReceipt: params.systemProvenanceReceipt,
     suppressCommandInterpretation: true,
     idempotencyKey: params.idempotencyKey,
   };
@@ -239,6 +253,40 @@ async function forwardPlaybookDraftToChatSend(
     ...opts,
     req: { ...opts.req, method: "chat.send", params: chatParams },
     params: chatParams,
+  });
+}
+
+async function forwardPlaybookDraftToChatSend(
+  opts: GatewayRequestHandlerOptions,
+  params: {
+    agentId: string;
+    idempotencyKey: string;
+    message: string;
+    sessionId?: string;
+    sessionKey: string;
+    targetAgentId?: string;
+  },
+): Promise<void> {
+  await forwardSkillWorkshopDraftToChatSend(opts, {
+    ...params,
+    systemProvenanceReceipt: buildPlaybookDraftAgentInstruction(),
+  });
+}
+
+async function forwardSkillDraftToChatSend(
+  opts: GatewayRequestHandlerOptions,
+  params: {
+    agentId: string;
+    idempotencyKey: string;
+    message: string;
+    sessionId?: string;
+    sessionKey: string;
+    targetAgentId?: string;
+  },
+): Promise<void> {
+  await forwardSkillWorkshopDraftToChatSend(opts, {
+    ...params,
+    systemProvenanceReceipt: buildSkillDraftAgentInstruction(),
   });
 }
 
@@ -530,6 +578,29 @@ export const skillsHandlers: GatewayRequestHandlers = {
       validate: validateSkillsProposalRequestDraftPlaybookParams,
       run: async (parsedParams, resolved) => {
         await forwardPlaybookDraftToChatSend(opts, {
+          agentId: resolved.agentId,
+          idempotencyKey: parsedParams.idempotencyKey,
+          message: parsedParams.message,
+          sessionId: parsedParams.sessionId,
+          sessionKey: parsedParams.sessionKey,
+          targetAgentId: parsedParams.targetAgentId
+            ? normalizeAgentId(parsedParams.targetAgentId)
+            : undefined,
+        });
+        return SKILL_PROPOSAL_RESPONSE_HANDLED;
+      },
+    });
+  },
+  "skills.proposals.requestDraftSkill": async (opts) => {
+    const { params, respond, context } = opts;
+    await runSkillsProposalWorkspaceHandler({
+      method: "skills.proposals.requestDraftSkill",
+      rawParams: params,
+      respond,
+      context,
+      validate: validateSkillsProposalRequestDraftSkillParams,
+      run: async (parsedParams, resolved) => {
+        await forwardSkillDraftToChatSend(opts, {
           agentId: resolved.agentId,
           idempotencyKey: parsedParams.idempotencyKey,
           message: parsedParams.message,

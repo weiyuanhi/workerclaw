@@ -46,6 +46,7 @@ import {
   loadChatHistory,
   requestChatSend,
   requestDraftPlaybookChatSend,
+  requestDraftSkillChatSend,
   requestSkillWorkshopRevisionChatSend,
   sendDetachedChatMessage,
   sendSteerChatMessage,
@@ -2000,6 +2001,41 @@ function injectCommandResult(host: ChatHost, content: string) {
 }
 
 export async function handleRequestDraftPlaybook(host: ChatHost) {
+  await handleRequestDraftFromConversation(host, {
+    disabledMessageKey: "chat.playbook.createDisabledNoMessages",
+    requestMessageKey: "chat.playbook.requestMessage",
+    send: requestDraftPlaybookChatSend,
+    kind: "playbook-draft",
+  });
+}
+
+export async function handleRequestDraftSkill(host: ChatHost) {
+  await handleRequestDraftFromConversation(host, {
+    disabledMessageKey: "chat.skill.createDisabledNoMessages",
+    requestMessageKey: "chat.skill.requestMessage",
+    send: requestDraftSkillChatSend,
+    kind: "skill-draft",
+  });
+}
+
+async function handleRequestDraftFromConversation(
+  host: ChatHost,
+  spec: {
+    disabledMessageKey: string;
+    requestMessageKey: string;
+    send: (
+      state: ChatState,
+      params: {
+        message: string;
+        runId: string;
+        sessionKey?: string;
+        agentId?: string;
+        targetAgentId?: string;
+      },
+    ) => Promise<ChatSendAck>;
+    kind: string;
+  },
+) {
   if (!host.connected || !host.client) {
     setChatError(host, "Gateway not connected");
     return;
@@ -2008,11 +2044,11 @@ export async function handleRequestDraftPlaybook(host: ChatHost) {
     return;
   }
   if (host.chatMessages.length === 0) {
-    setChatError(host, t("chat.playbook.createDisabledNoMessages"));
+    setChatError(host, t(spec.disabledMessageKey));
     return;
   }
 
-  const message = t("chat.playbook.requestMessage");
+  const message = t(spec.requestMessageKey);
   const runId = generateUUID();
   const startedAt = Date.now();
   const requestStartedAtMs = controlUiNowMs();
@@ -2028,7 +2064,7 @@ export async function handleRequestDraftPlaybook(host: ChatHost) {
   });
 
   try {
-    const ack = await requestDraftPlaybookChatSend(host as unknown as ChatState, {
+    const ack = await spec.send(host as unknown as ChatState, {
       message,
       runId,
       sessionKey,
@@ -2069,7 +2105,7 @@ export async function handleRequestDraftPlaybook(host: ChatHost) {
         durationMs: roundedControlUiDurationMs(controlUiNowMs() - requestStartedAtMs),
         runId,
         sessionKey,
-        kind: "playbook-draft",
+        kind: spec.kind,
         ackStatus: ack.status,
       },
     );

@@ -393,6 +393,10 @@ import {
   SkillsProposalRequestDraftPlaybookParamsSchema,
   type SkillsProposalRequestDraftPlaybookResult,
   SkillsProposalRequestDraftPlaybookResultSchema,
+  type SkillsProposalRequestDraftSkillParams,
+  SkillsProposalRequestDraftSkillParamsSchema,
+  type SkillsProposalRequestDraftSkillResult,
+  SkillsProposalRequestDraftSkillResultSchema,
   type SkillsProposalReviseParams,
   SkillsProposalReviseParamsSchema,
   type SkillsProposalUpdateParams,
@@ -805,6 +809,8 @@ export const validateSkillsProposalRequestDraftPlaybookParams =
   lazyCompile<SkillsProposalRequestDraftPlaybookParams>(
     SkillsProposalRequestDraftPlaybookParamsSchema,
   );
+export const validateSkillsProposalRequestDraftSkillParams =
+  lazyCompile<SkillsProposalRequestDraftSkillParams>(SkillsProposalRequestDraftSkillParamsSchema);
 export const validateSkillsProposalActionParams = lazyCompile<SkillsProposalActionParams>(
   SkillsProposalActionParamsSchema,
 );
@@ -1129,6 +1135,8 @@ export {
   SkillsProposalRequestRevisionResultSchema,
   SkillsProposalRequestDraftPlaybookParamsSchema,
   SkillsProposalRequestDraftPlaybookResultSchema,
+  SkillsProposalRequestDraftSkillParamsSchema,
+  SkillsProposalRequestDraftSkillResultSchema,
   SkillsProposalActionParamsSchema,
   SkillsProposalApplyResultSchema,
   SkillsProposalRecordResultSchema,
@@ -1297,6 +1305,8 @@ export type {
   SkillsProposalRequestRevisionResult,
   SkillsProposalRequestDraftPlaybookParams,
   SkillsProposalRequestDraftPlaybookResult,
+  SkillsProposalRequestDraftSkillParams,
+  SkillsProposalRequestDraftSkillResult,
   SkillsProposalActionParams,
   SkillsProposalApplyResult,
   SkillsProposalRecordResult,

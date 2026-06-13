@@ -361,6 +361,16 @@ describe("resolveSessionDisplayName", () => {
     expect(resolveSessionDisplayName("something-custom")).toBe("something-custom");
   });
 
+  it("returns Chat for dashboard session keys", () => {
+    expect(resolveSessionDisplayName("agent:main:dashboard:8f3c2a1b-4d5e-6789-abcd-ef0123456789")).toBe(
+      "Chat",
+    );
+  });
+
+  it("returns Web Chat for webchat session keys", () => {
+    expect(resolveSessionDisplayName("agent:main:webchat:direct:user-123")).toBe("Web Chat");
+  });
+
   // ── With row data (label / displayName) ──────────
 
   it("returns parsed fallback when row has no label or displayName", () => {
@@ -395,6 +405,15 @@ describe("resolveSessionDisplayName", () => {
         row({ key: "discord:123:456", displayName: "My Chat" }),
       ),
     ).toBe("My Chat");
+  });
+
+  it("falls back to derivedTitle when label and displayName are absent", () => {
+    expect(
+      resolveSessionDisplayName(
+        "agent:main:dashboard:child",
+        row({ key: "agent:main:dashboard:child", derivedTitle: "Fix login bug" }),
+      ),
+    ).toBe("Fix login bug");
   });
 
   it("prefers label over displayName when both are present", () => {

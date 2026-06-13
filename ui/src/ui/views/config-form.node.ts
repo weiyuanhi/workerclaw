@@ -1,5 +1,6 @@
 // Control UI view renders config form screen content.
 import { html, nothing, type TemplateResult } from "lit";
+import { localizeConfigHint } from "../../i18n/config-hints.ts";
 import { t } from "../../i18n/index.ts";
 import { formatUnknownText } from "../format.ts";
 import { icons as sharedIcons } from "../icons.ts";
@@ -7,11 +8,20 @@ import {
   normalizeLowercaseStringOrEmpty,
   normalizeOptionalLowercaseString,
 } from "../string-coerce.ts";
-import type { ConfigUiHints } from "../types.ts";
+import {
+  isChannelsMapPath,
+  renderChannelsMapField,
+} from "./config-form-channels-map.ts";
+import {
+  isModelProvidersMapPath,
+  requestConfigFormUpdate,
+} from "./config-form-provider-modal.ts";
+import { renderModelProvidersMapField } from "./config-form-providers-map.ts";
 import {
   defaultValue,
   hasSensitiveConfigData,
   hintForPath,
+  hintKeyForPath,
   humanize,
   pathKey,
   REDACTED_PLACEHOLDER,
@@ -266,9 +276,12 @@ function resolveFieldMeta(
   schema: JsonSchema,
   hints: ConfigUiHints,
 ): FieldMeta {
+  const hintKey = hintKeyForPath(path, hints);
   const hint = hintForPath(path, hints);
-  const label = hint?.label ?? schema.title ?? humanize(String(path.at(-1)));
-  const help = hint?.help ?? schema.description;
+  const rawLabel = hint?.label ?? schema.title ?? humanize(String(path.at(-1)));
+  const rawHelp = hint?.help ?? schema.description;
+  const label = localizeConfigHint(hintKey, "labels", rawLabel) ?? rawLabel;
+  const help = localizeConfigHint(hintKey, "help", rawHelp) ?? rawHelp;
   const schemaTags = normalizeTags(schema["x-tags"] ?? schema.tags);
   const hintTags = normalizeTags(hint?.tags);
   return {
@@ -980,6 +993,20 @@ function renderObject(params: {
     fallback && typeof fallback === "object" && !Array.isArray(fallback)
       ? (fallback as Record<string, unknown>)
       : {};
+  if (isChannelsMapPath(path)) {
+    return renderChannelsMapField({
+      schema,
+      value: obj,
+      path,
+      hints,
+      rawAvailable,
+      unsupported,
+      disabled,
+      searchCriteria: childSearchCriteria,
+      onPatch,
+      onRequestUpdate: requestConfigFormUpdate,
+    });
+  }
   const props = schema.properties ?? {};
   const entries = Object.entries(props);
 
@@ -1222,11 +1249,36 @@ function renderMapField(params: {
           }),
         )
       : entries;
+  const modelProvidersMap = isModelProvidersMapPath(path);
+  if (modelProvidersMap) {
+    return renderModelProvidersMapField({
+      schema,
+      value: value ?? {},
+      path,
+      hints,
+      rawAvailable,
+      unsupported,
+      disabled,
+      searchCriteria,
+      revealSensitive,
+      isSensitivePathRevealed,
+      onToggleSensitivePath,
+      onPatch,
+      onRequestUpdate: requestConfigFormUpdate,
+      renderEntry: (entryParams) =>
+        renderNode({
+          ...entryParams,
+          showLabel: true,
+        }),
+    });
+  }
+  const mapLabel = t("configPage.form.customEntries");
+  const addLabel = t("configPage.form.add");
 
   return html`
     <div class="cfg-map">
       <div class="cfg-map__header">
-        <span class="cfg-map__label">${t("configPage.form.customEntries")}</span>
+        <span class="cfg-map__label">${mapLabel}</span>
         <button
           type="button"
           class="cfg-map__add"
@@ -1244,7 +1296,7 @@ function renderMapField(params: {
           }}
         >
           <span class="cfg-map__add-icon">${icons.plus}</span>
-          Add Entry
+          ${addLabel}
         </button>
       </div>
 

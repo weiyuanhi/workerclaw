@@ -17,6 +17,7 @@ describe("composer toolbar help", () => {
         hasRealtimeTalkOptions: true,
         isBusy: false,
         onComposerToolbarHelpToggle,
+        showSkill: true,
         showPlaybook: true,
       }),
       container,
@@ -24,6 +25,7 @@ describe("composer toolbar help", () => {
 
     expect(container.querySelector(".agent-chat__toolbar-help-panel")).not.toBeNull();
     expect(container.textContent).toContain("Attach file");
+    expect(container.textContent).toContain("Create skill");
     expect(container.textContent).toContain("Create playbook");
     expect(container.textContent).toContain("Send");
   });
@@ -41,6 +43,7 @@ describe("composer toolbar help", () => {
         hasRealtimeTalkOptions: false,
         isBusy: true,
         onComposerToolbarHelpToggle,
+        showSkill: false,
         showPlaybook: false,
       }),
       container,

@@ -4,8 +4,6 @@ import { t } from "../../i18n/index.ts";
 import { formatRelativeTimestamp } from "../format.ts";
 import type {
   ChannelAccountSnapshot,
-  ChannelUiMetaEntry,
-  ChannelsStatusSnapshot,
   DiscordStatus,
   GoogleChatStatus,
   IMessageStatus,
@@ -16,24 +14,37 @@ import type {
   TelegramStatus,
   WhatsAppStatus,
 } from "../types.ts";
+import { renderChannelConfigEditModal } from "./channels-config-modal.render.ts";
+import { bindChannelConfigRequestUpdate } from "./channels-config-modal.ts";
 import { renderChannelConfigSection } from "./channels.config.ts";
 import { renderDiscordCard } from "./channels.discord.ts";
 import { renderGoogleChatCard } from "./channels.googlechat.ts";
 import { renderIMessageCard } from "./channels.imessage.ts";
 import { renderNostrCard } from "./channels.nostr.ts";
 import {
+  isChannelPresentInSnapshot,
+  isWeixinChannelId,
+  resolveChannelsPageLabel,
+  resolveChannelsPageOrder,
+} from "./channels-page-order.ts";
+import { renderSignalCard } from "./channels.signal.ts";
+import { renderSlackCard } from "./channels.slack.ts";
+import { renderTelegramCard } from "./channels.telegram.ts";
+import {
   channelEnabled,
+  deriveConnectedStatus,
+  deriveRunningStatus,
   formatNullableBoolean,
   renderChannelAccountCount,
   resolveChannelDisplayState,
 } from "./channels.shared.ts";
-import { renderSignalCard } from "./channels.signal.ts";
-import { renderSlackCard } from "./channels.slack.ts";
-import { renderTelegramCard } from "./channels.telegram.ts";
 import type { ChannelKey, ChannelsChannelData, ChannelsProps } from "./channels.types.ts";
+
+import { renderWeixinCard } from "./channels.weixin.ts";
 import { renderWhatsAppCard } from "./channels.whatsapp.ts";
 
 export function renderChannels(props: ChannelsProps) {
+  bindChannelConfigRequestUpdate(props.onRequestUpdate);
   const channels = props.snapshot?.channels as Record<string, unknown> | null;
   const whatsapp = (channels?.whatsapp ?? undefined) as WhatsAppStatus | undefined;
   const telegram = (channels?.telegram ?? undefined) as TelegramStatus | undefined;
@@ -43,7 +54,7 @@ export function renderChannels(props: ChannelsProps) {
   const signal = (channels?.signal ?? null) as SignalStatus | null;
   const imessage = (channels?.imessage ?? null) as IMessageStatus | null;
   const nostr = (channels?.nostr ?? null) as NostrStatus | null;
-  const channelOrder = resolveChannelOrder(props.snapshot);
+  const channelOrder = resolveChannelsPageOrder(props);
   const orderedChannels = channelOrder
     .map((key, index) => ({
       key,
@@ -89,14 +100,14 @@ export function renderChannels(props: ChannelsProps) {
       ${showingStaleSnapshot
         ? html`
             <div class="callout info" style="margin-top: 12px;">
-              Refreshing channel status in the background; showing the last successful snapshot.
+              ${t("channels.health.refreshingStale")}
             </div>
           `
         : nothing}
       ${props.snapshot?.partial
         ? html`
             <div class="callout warn" style="margin-top: 12px;">
-              Some channel checks did not finish before the UI budget.
+              ${t("channels.health.partialCheck")}
               ${partialWarnings.length > 0 ? partialWarnings.slice(0, 3).join("; ") : ""}
             </div>
           `
@@ -109,17 +120,9 @@ ${props.snapshot ? JSON.stringify(props.snapshot, null, 2) : t("channels.health.
       </pre
       >
     </section>
-  `;
-}
 
-function resolveChannelOrder(snapshot: ChannelsStatusSnapshot | null): ChannelKey[] {
-  if (snapshot?.channelMeta?.length) {
-    return snapshot.channelMeta.map((entry) => entry.id);
-  }
-  if (snapshot?.channelOrder?.length) {
-    return snapshot.channelOrder;
-  }
-  return ["whatsapp", "telegram", "discord", "googlechat", "slack", "signal", "imessage", "nostr"];
+    ${renderChannelConfigEditModal()}
+  `;
 }
 
 function renderChannel(key: ChannelKey, props: ChannelsProps, data: ChannelsChannelData) {
@@ -196,6 +199,14 @@ function renderChannel(key: ChannelKey, props: ChannelsProps, data: ChannelsChan
       });
     }
     default:
+      if (isWeixinChannelId(key)) {
+        return renderWeixinCard({
+          props,
+          channelId: key,
+          channelLabel: resolveChannelsPageLabel(key, props),
+          accountCountLabel,
+        });
+      }
       return renderGenericChannelCard(key, props, data.channelAccounts ?? {});
   }
 }
@@ -205,8 +216,9 @@ function renderGenericChannelCard(
   props: ChannelsProps,
   channelAccounts: Record<string, ChannelAccountSnapshot[]>,
 ) {
-  const label = resolveChannelLabel(props.snapshot, key);
+  const label = resolveChannelsPageLabel(key, props);
   const displayState = resolveChannelDisplayState(key, props);
+  const configOnly = !isChannelPresentInSnapshot(key, props) && displayState.configured === true;
   const lastError =
     typeof displayState.status?.lastError === "string" ? displayState.status.lastError : undefined;
   const accounts = channelAccounts[key] ?? [];
@@ -217,6 +229,11 @@ function renderGenericChannelCard(
       <div class="card-title">${label}</div>
       <div class="card-sub">${t("channels.generic.subtitle")}</div>
       ${accountCountLabel}
+      ${configOnly && !isWeixinChannelId(key)
+        ? html`<div class="callout info" style="margin-top: 12px;">
+            ${t("channels.configOnly.hint")}
+          </div>`
+        : nothing}
       ${accounts.length > 0
         ? html`
             <div class="account-card-list">
@@ -242,57 +259,16 @@ function renderGenericChannelCard(
       ${lastError
         ? html`<div class="callout danger" style="margin-top: 12px;">${lastError}</div>`
         : nothing}
-      ${renderChannelConfigSection({ channelId: key, props })}
+      ${renderChannelConfigSection({
+        channelId: key,
+        channelLabel: label,
+        props,
+      })}
+      <div class="row" style="margin-top: 12px;">
+        <button class="btn" @click=${() => props.onRefresh(true)}>${t("common.refresh")}</button>
+      </div>
     </div>
   `;
-}
-
-function resolveChannelMetaMap(
-  snapshot: ChannelsStatusSnapshot | null,
-): Record<string, ChannelUiMetaEntry> {
-  if (!snapshot?.channelMeta?.length) {
-    return {};
-  }
-  return Object.fromEntries(snapshot.channelMeta.map((entry) => [entry.id, entry]));
-}
-
-function resolveChannelLabel(snapshot: ChannelsStatusSnapshot | null, key: string): string {
-  const meta = resolveChannelMetaMap(snapshot)[key];
-  return meta?.label ?? snapshot?.channelLabels?.[key] ?? key;
-}
-
-const RECENT_ACTIVITY_THRESHOLD_MS = 10 * 60 * 1000; // 10 minutes
-
-function hasRecentActivity(account: ChannelAccountSnapshot): boolean {
-  if (!account.lastInboundAt) {
-    return false;
-  }
-  return Date.now() - account.lastInboundAt < RECENT_ACTIVITY_THRESHOLD_MS;
-}
-
-function deriveRunningStatus(account: ChannelAccountSnapshot): string {
-  if (account.running) {
-    return t("common.yes");
-  }
-  // If we have recent inbound activity, the channel is effectively running
-  if (hasRecentActivity(account)) {
-    return t("common.active");
-  }
-  return t("common.no");
-}
-
-function deriveConnectedStatus(account: ChannelAccountSnapshot): string {
-  if (account.connected === true) {
-    return t("common.yes");
-  }
-  if (account.connected === false) {
-    return t("common.no");
-  }
-  // If connected is null/undefined but we have recent activity, show as active
-  if (hasRecentActivity(account)) {
-    return t("common.active");
-  }
-  return t("common.na");
 }
 
 function renderGenericAccount(account: ChannelAccountSnapshot) {

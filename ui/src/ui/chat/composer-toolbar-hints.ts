@@ -12,6 +12,7 @@ export type ComposerToolbarHintsContext = {
   hasRealtimeTalkOptions: boolean;
   isBusy: boolean;
   onComposerToolbarHelpToggle: () => void;
+  showSkill: boolean;
   showPlaybook: boolean;
 };
 
@@ -45,6 +46,14 @@ function buildComposerToolbarHintItems(
       icon: icons.settings,
       label: t("chat.composer.toolbarHints.talkSettings"),
       description: t("chat.composer.toolbarHints.talkSettingsHint"),
+    });
+  }
+
+  if (ctx.showSkill) {
+    items.push({
+      icon: icons.puzzle,
+      label: t("chat.composer.toolbarHints.skill"),
+      description: t("chat.composer.toolbarHints.skillHint"),
     });
   }
 

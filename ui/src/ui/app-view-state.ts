@@ -214,7 +214,7 @@ export type AppViewState = {
   dreamingModeSaving: boolean;
   dreamingRestartConfirmOpen: boolean;
   dreamingRestartConfirmLoading: boolean;
-  dreamingPendingEnabled: boolean | null;
+  dreamingSettingsDraft: import("./dreaming-settings.js").DreamingSettingsDraft | null;
   dreamDiaryLoading: boolean;
   dreamDiaryActionLoading: boolean;
   dreamDiaryActionMessage: { kind: "success" | "error"; text: string } | null;
@@ -263,6 +263,10 @@ export type AppViewState = {
   whatsappLoginQrDataUrl: string | null;
   whatsappLoginConnected: boolean | null;
   whatsappBusy: boolean;
+  weixinLoginMessage: string | null;
+  weixinLoginQrUrl: string | null;
+  weixinLoginSessionKey: string | null;
+  weixinBusy: boolean;
   nostrProfileFormState: NostrProfileFormState | null;
   nostrProfileAccountId: string | null;
   configFormDirty: boolean;
@@ -489,6 +493,8 @@ export type AppViewState = {
     handleWhatsAppStart: (force: boolean) => Promise<void>;
     handleWhatsAppWait: () => Promise<void>;
     handleWhatsAppLogout: () => Promise<void>;
+    handleWeixinStart: (force: boolean) => Promise<void>;
+    handleWeixinWait: () => Promise<void>;
     handleChannelConfigSave: () => Promise<void>;
     handleChannelConfigReload: () => Promise<void>;
     handleNostrProfileEdit: (accountId: string, profile: NostrProfile | null) => void;

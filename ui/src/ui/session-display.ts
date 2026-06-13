@@ -74,6 +74,16 @@ export function parseSessionKey(key: string): SessionKeyInfo {
     }
   }
 
+  // Dashboard / Control UI child sessions: agent:<x>:dashboard:<id>.
+  if (normalized.includes(":dashboard:")) {
+    return { prefix: "", fallbackName: "Chat" };
+  }
+
+  // Webchat sessions: agent:<x>:webchat:...
+  if (normalized.includes(":webchat:")) {
+    return { prefix: "", fallbackName: "Web Chat" };
+  }
+
   // Unknown: return key as-is.
   return { prefix: "", fallbackName: key };
 }
@@ -84,6 +94,7 @@ export function resolveSessionDisplayName(
 ): string {
   const label = normalizeOptionalString(row?.label) ?? "";
   const displayName = normalizeOptionalString(row?.displayName) ?? "";
+  const derivedTitle = normalizeOptionalString(row?.derivedTitle) ?? "";
   const { prefix, fallbackName } = parseSessionKey(key);
 
   const applyTypedPrefix = (name: string): string => {
@@ -99,6 +110,9 @@ export function resolveSessionDisplayName(
   }
   if (displayName && displayName !== key) {
     return applyTypedPrefix(displayName);
+  }
+  if (derivedTitle && derivedTitle !== key) {
+    return applyTypedPrefix(derivedTitle);
   }
   return fallbackName;
 }

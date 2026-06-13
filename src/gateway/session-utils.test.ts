@@ -2418,6 +2418,24 @@ describe("deriveSessionTitle", () => {
     expect(deriveSessionTitle(entry, "Hello, how are you?")).toBe("Hello, how are you?");
   });
 
+  test("skips code-only first user messages and falls back to session id prefix", () => {
+    const entry = {
+      sessionId: "abcd1234-5678-90ef-ghij-klmnopqrstuv",
+      updatedAt: new Date("2024-03-15T10:30:00Z").getTime(),
+    } as SessionEntry;
+    expect(deriveSessionTitle(entry, "const payload = { ok: true };")).toBe("abcd1234 (2024-03-15)");
+  });
+
+  test("uses prose before fenced code in first user message", () => {
+    const entry = {
+      sessionId: "abc123",
+      updatedAt: Date.now(),
+    } as SessionEntry;
+    expect(
+      deriveSessionTitle(entry, "Fix login bug\n```ts\nexport function auth() {}\n```"),
+    ).toBe("Fix login bug");
+  });
+
   test("truncates long first user message to 60 chars with ellipsis", () => {
     const entry = {
       sessionId: "abc123",

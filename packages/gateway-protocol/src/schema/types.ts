@@ -234,6 +234,10 @@ export type SkillsProposalRequestDraftPlaybookParams =
   SchemaType<"SkillsProposalRequestDraftPlaybookParams">;
 export type SkillsProposalRequestDraftPlaybookResult =
   SchemaType<"SkillsProposalRequestDraftPlaybookResult">;
+export type SkillsProposalRequestDraftSkillParams =
+  SchemaType<"SkillsProposalRequestDraftSkillParams">;
+export type SkillsProposalRequestDraftSkillResult =
+  SchemaType<"SkillsProposalRequestDraftSkillResult">;
 export type SkillsProposalActionParams = SchemaType<"SkillsProposalActionParams">;
 export type SkillsProposalApplyResult = SchemaType<"SkillsProposalApplyResult">;
 export type SkillsProposalRecordResult = SchemaType<"SkillsProposalRecordResult">;

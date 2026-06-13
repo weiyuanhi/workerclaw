@@ -27,6 +27,12 @@ export type ChannelsProps = {
   whatsappQrDataUrl: string | null;
   whatsappConnected: boolean | null;
   whatsappBusy: boolean;
+  weixinLoginMessage: string | null;
+  weixinLoginQrUrl: string | null;
+  weixinLoginSessionKey: string | null;
+  weixinBusy: boolean;
+  onWeixinStart: (force: boolean) => void;
+  onWeixinWait: () => void;
   configSchema: unknown;
   configSchemaLoading: boolean;
   configForm: Record<string, unknown> | null;
@@ -42,6 +48,7 @@ export type ChannelsProps = {
   onConfigPatch: (path: Array<string | number>, value: unknown) => void;
   onConfigSave: () => void;
   onConfigReload: () => void;
+  onRequestUpdate?: () => void;
   onNostrProfileEdit: (accountId: string, profile: NostrProfile | null) => void;
   onNostrProfileCancel: () => void;
   onNostrProfileFieldChange: (field: keyof NostrProfile, value: string) => void;

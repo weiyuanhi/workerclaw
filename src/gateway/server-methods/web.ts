@@ -6,11 +6,16 @@ import {
   validateWebLoginStartParams,
   validateWebLoginWaitParams,
 } from "../../../packages/gateway-protocol/src/index.js";
-import { listChannelPlugins } from "../../channels/plugins/index.js";
+import { getChannelPlugin, listChannelPlugins } from "../../channels/plugins/index.js";
 import type { ChannelId } from "../../channels/plugins/types.public.js";
 import { formatForLog } from "../ws-log.js";
 import type { GatewayRequestHandlers, RespondFn } from "./types.js";
 import { assertValidParams } from "./validation.js";
+import {
+  buildWebLoginUnsupportedMessage,
+  resolveWebLoginChannelPlugin,
+} from "./web-login-channel.js";
+import { normalizeWebLoginQrResult } from "./web-login-qr.js";
 
 const WEB_LOGIN_METHODS = new Set(["web.login.start", "web.login.wait"]);
 
@@ -33,6 +38,16 @@ function resolveAccountId(params: unknown): string | undefined {
     : undefined;
 }
 
+function resolveWebLoginChannelId(params: unknown): string | undefined {
+  const channel = (params as { channel?: unknown }).channel;
+  return typeof channel === "string" && channel.trim() ? channel.trim() : undefined;
+}
+
+function resolveWebLoginSessionKey(params: unknown): string | undefined {
+  const sessionKey = (params as { sessionKey?: unknown }).sessionKey;
+  return typeof sessionKey === "string" && sessionKey.trim() ? sessionKey.trim() : undefined;
+}
+
 function respondProviderUnavailable(respond: RespondFn) {
   respond(
     false,
@@ -49,6 +64,18 @@ function respondProviderUnsupported(respond: RespondFn, providerId: string) {
   );
 }
 
+function respondWebLoginUnsupported(
+  respond: RespondFn,
+  channelInput: string,
+  cfg?: import("../../config/types.openclaw.js").OpenClawConfig,
+) {
+  const message =
+    cfg != null
+      ? buildWebLoginUnsupportedMessage({ channelInput, cfg })
+      : `web login is not supported for channel ${channelInput}`;
+  respond(false, undefined, errorShape(ErrorCodes.INVALID_REQUEST, message));
+}
+
 function respondWebLoginUnavailable(respond: RespondFn, err: unknown) {
   respond(false, undefined, errorShape(ErrorCodes.UNAVAILABLE, formatForLog(err)));
 }
@@ -58,15 +85,25 @@ function resolveWebLoginRequest<TMethod extends WebLoginGatewayMethod>(params: {
   rawParams: unknown;
   respond: RespondFn;
   gatewayMethod: TMethod;
+  cfg?: import("../../config/types.openclaw.js").OpenClawConfig;
 }): {
   accountId?: string;
   provider: WebLoginProvider;
   run: NonNullable<WebLoginGateway[TMethod]>;
 } | null {
   const accountId = resolveAccountId(params.rawParams);
-  const provider = resolveWebLoginProvider();
+  const channelId = resolveWebLoginChannelId(params.rawParams);
+  const provider = channelId
+    ? params.cfg
+      ? resolveWebLoginChannelPlugin({ channelInput: channelId, cfg: params.cfg })
+      : (getChannelPlugin(channelId as ChannelId) ?? null)
+    : resolveWebLoginProvider();
   if (!provider) {
-    respondProviderUnavailable(params.respond);
+    if (channelId) {
+      respondWebLoginUnsupported(params.respond, channelId, params.cfg);
+    } else {
+      respondProviderUnavailable(params.respond);
+    }
     return null;
   }
   const gateway = provider.gateway;
@@ -109,6 +146,7 @@ export const webHandlers: GatewayRequestHandlers = {
         rawParams: params,
         respond,
         gatewayMethod: "loginWithQrStart",
+        cfg: context.getRuntimeConfig(),
       });
       if (!request) {
         return;
@@ -120,12 +158,14 @@ export const webHandlers: GatewayRequestHandlers = {
         accountId,
       });
       await context.stopChannel(provider.id, accountId);
-      const result = await run({
-        force: Boolean(params.force),
-        timeoutMs: typeof params.timeoutMs === "number" ? params.timeoutMs : undefined,
-        verbose: Boolean(params.verbose),
-        accountId,
-      });
+      const result = await normalizeWebLoginQrResult(
+        await run({
+          force: Boolean(params.force),
+          timeoutMs: typeof params.timeoutMs === "number" ? params.timeoutMs : undefined,
+          verbose: Boolean(params.verbose),
+          accountId,
+        }),
+      );
       if (result.connected) {
         await context.startChannel(provider.id, accountId);
       } else if (wasRunning && !result.qrDataUrl) {
@@ -147,17 +187,21 @@ export const webHandlers: GatewayRequestHandlers = {
         rawParams: params,
         respond,
         gatewayMethod: "loginWithQrWait",
+        cfg: context.getRuntimeConfig(),
       });
       if (!request) {
         return;
       }
       const { accountId, provider, run } = request;
-      const result = await run({
-        timeoutMs: typeof params.timeoutMs === "number" ? params.timeoutMs : undefined,
-        accountId,
-        currentQrDataUrl:
-          typeof params.currentQrDataUrl === "string" ? params.currentQrDataUrl : undefined,
-      });
+      const result = await normalizeWebLoginQrResult(
+        await run({
+          timeoutMs: typeof params.timeoutMs === "number" ? params.timeoutMs : undefined,
+          accountId,
+          sessionKey: resolveWebLoginSessionKey(params),
+          currentQrDataUrl:
+            typeof params.currentQrDataUrl === "string" ? params.currentQrDataUrl : undefined,
+        }),
+      );
       if (result.connected) {
         await context.startChannel(provider.id, accountId);
       }

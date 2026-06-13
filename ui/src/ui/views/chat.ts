@@ -170,6 +170,8 @@ export type ChatProps = {
   onQueueSteer?: (id: string) => void;
   onDismissSideResult?: () => void;
   onNewSession: () => void;
+  onRequestDraftSkill?: () => void;
+  canRequestDraftSkill?: boolean;
   onRequestDraftPlaybook?: () => void;
   canRequestDraftPlaybook?: boolean;
   composerToolbarHelpOpen?: boolean;
@@ -2205,6 +2207,7 @@ export function renderChat(props: ChatProps) {
                   hasRealtimeTalkOptions: Boolean(props.onToggleRealtimeTalkOptions),
                   isBusy,
                   onComposerToolbarHelpToggle: props.onComposerToolbarHelpToggle,
+                  showSkill: Boolean(props.onRequestDraftSkill),
                   showPlaybook: Boolean(props.onRequestDraftPlaybook),
                 })
               : nothing}
@@ -2265,6 +2268,26 @@ export function renderChat(props: ChatProps) {
                     <span class="agent-chat__control-label"
                       >${t("chat.composer.toolbarHints.talkSettings")}</span
                     >
+                  </button>
+                `
+              : nothing}
+            ${props.onRequestDraftSkill
+              ? html`
+                  <button
+                    type="button"
+                    class="agent-chat__input-btn"
+                    @click=${props.onRequestDraftSkill}
+                    title=${props.canRequestDraftSkill
+                      ? t("chat.composer.toolbarHints.skillHint")
+                      : t("chat.skill.createDisabledNoMessages")}
+                    aria-label=${t("chat.skill.create")}
+                    data-tooltip=${props.canRequestDraftSkill
+                      ? t("chat.composer.toolbarHints.skillHint")
+                      : t("chat.skill.createDisabledNoMessages")}
+                    ?disabled=${!props.canRequestDraftSkill}
+                  >
+                    ${icons.puzzle}
+                    <span class="agent-chat__control-label">${t("chat.skill.create")}</span>
                   </button>
                 `
               : nothing}

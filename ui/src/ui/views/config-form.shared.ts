@@ -61,14 +61,13 @@ export function pathKey(path: Array<string | number>): string {
   return path.filter((segment) => typeof segment === "string").join(".");
 }
 
-export function hintForPath(path: Array<string | number>, hints: ConfigUiHints) {
+export function hintKeyForPath(path: Array<string | number>, hints: ConfigUiHints): string {
   const key = pathKey(path);
-  const direct = hints[key];
-  if (direct) {
-    return direct;
+  if (hints[key]) {
+    return key;
   }
   const segments = path.map(String);
-  for (const [hintKey, hint] of Object.entries(hints)) {
+  for (const hintKey of Object.keys(hints)) {
     if (!hintKey.includes("*")) {
       continue;
     }
@@ -84,10 +83,15 @@ export function hintForPath(path: Array<string | number>, hints: ConfigUiHints) 
       }
     }
     if (match) {
-      return hint;
+      return hintKey;
     }
   }
-  return undefined;
+  return key;
+}
+
+export function hintForPath(path: Array<string | number>, hints: ConfigUiHints) {
+  const key = hintKeyForPath(path, hints);
+  return hints[key];
 }
 
 export function humanize(raw: string) {

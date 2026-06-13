@@ -15,12 +15,15 @@ import {
   handleWhatsAppLogout as handleWhatsAppLogoutInternal,
   handleWhatsAppStart as handleWhatsAppStartInternal,
   handleWhatsAppWait as handleWhatsAppWaitInternal,
+  handleWeixinStart as handleWeixinStartInternal,
+  handleWeixinWait as handleWeixinWaitInternal,
 } from "./app-channels.ts";
 import {
   handleAbortChat as handleAbortChatInternal,
   handleChatDraftChange as handleChatDraftChangeInternal,
   handleChatInputHistoryKey as handleChatInputHistoryKeyInternal,
   handleRequestDraftPlaybook as handleRequestDraftPlaybookInternal,
+  handleRequestDraftSkill as handleRequestDraftSkillInternal,
   handleSendChat as handleSendChatInternal,
   removeQueuedMessage as removeQueuedMessageInternal,
   resetChatInputHistoryNavigation as resetChatInputHistoryNavigationInternal,
@@ -102,6 +105,7 @@ import type {
   WikiImportInsights,
   WikiMemoryPalace,
 } from "./controllers/dreaming.ts";
+import type { DreamingSettingsDraft } from "./dreaming-settings.ts";
 import {
   dismissExecApprovalPrompt,
   isStaleApprovalResolutionError,
@@ -385,7 +389,7 @@ export class OpenClawApp extends LitElement {
   @state() dreamingModeSaving = false;
   @state() dreamingRestartConfirmOpen = false;
   @state() dreamingRestartConfirmLoading = false;
-  @state() dreamingPendingEnabled: boolean | null = null;
+  @state() dreamingSettingsDraft: DreamingSettingsDraft | null = null;
   @state() dreamDiaryLoading = false;
   @state() dreamDiaryActionLoading = false;
   @state() dreamDiaryActionMessage: { kind: "success" | "error"; text: string } | null = null;
@@ -436,6 +440,10 @@ export class OpenClawApp extends LitElement {
   @state() whatsappLoginQrDataUrl: string | null = null;
   @state() whatsappLoginConnected: boolean | null = null;
   @state() whatsappBusy = false;
+  @state() weixinLoginMessage: string | null = null;
+  @state() weixinLoginQrUrl: string | null = null;
+  @state() weixinLoginSessionKey: string | null = null;
+  @state() weixinBusy = false;
   @state() nostrProfileFormState: NostrProfileFormState | null = null;
   @state() nostrProfileAccountId: string | null = null;
 
@@ -1185,6 +1193,12 @@ export class OpenClawApp extends LitElement {
     );
   }
 
+  async handleRequestDraftSkill() {
+    await handleRequestDraftSkillInternal(
+      this as unknown as Parameters<typeof handleRequestDraftSkillInternal>[0],
+    );
+  }
+
   updateRealtimeTalkOptions(next: Partial<typeof this.realtimeTalkOptions>) {
     this.realtimeTalkOptions = { ...this.realtimeTalkOptions, ...next };
   }
@@ -1312,6 +1326,14 @@ export class OpenClawApp extends LitElement {
 
   async handleWhatsAppLogout() {
     await handleWhatsAppLogoutInternal(this);
+  }
+
+  async handleWeixinStart(force: boolean) {
+    await handleWeixinStartInternal(this, force);
+  }
+
+  async handleWeixinWait() {
+    await handleWeixinWaitInternal(this);
   }
 
   async handleChannelConfigSave() {

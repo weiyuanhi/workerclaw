@@ -2,6 +2,10 @@
 import { html, nothing } from "lit";
 import { t } from "../../i18n/index.ts";
 import type { ChannelAccountSnapshot } from "../types.ts";
+import {
+  isChannelConfiguredInForm,
+  isChannelPresentInSnapshot,
+} from "./channels-page-order.ts";
 import type { ChannelKey, ChannelsProps } from "./channels.types.ts";
 
 type ChannelDisplayState = {
@@ -53,7 +57,9 @@ export function resolveChannelDisplayState(
       ? status.configured
       : typeof defaultAccount?.configured === "boolean"
         ? defaultAccount.configured
-        : null;
+        : isChannelConfiguredInForm(key, props)
+          ? true
+          : null;
   const running = typeof status?.running === "boolean" ? status.running : null;
   const connected = typeof status?.connected === "boolean" ? status.connected : null;
   const hasAnyActiveAccount = accounts.some(
@@ -71,16 +77,16 @@ export function resolveChannelDisplayState(
 }
 
 export function channelEnabled(key: ChannelKey, props: ChannelsProps) {
-  if (!props.snapshot) {
-    return false;
-  }
   const displayState = resolveChannelDisplayState(key, props);
-  return (
+  if (
     displayState.configured === true ||
     displayState.running === true ||
     displayState.connected === true ||
     displayState.hasAnyActiveAccount
-  );
+  ) {
+    return true;
+  }
+  return isChannelConfiguredInForm(key, props);
 }
 
 export function resolveChannelConfigured(key: ChannelKey, props: ChannelsProps): boolean | null {
@@ -147,4 +153,36 @@ export function renderChannelAccountCount(
     return nothing;
   }
   return html`<div class="account-count">${t("channels.accountCount", { count: String(count) })}</div>`;
+}
+
+const RECENT_ACTIVITY_THRESHOLD_MS = 10 * 60 * 1000; // 10 minutes
+
+function hasRecentActivity(account: ChannelAccountSnapshot): boolean {
+  if (!account.lastInboundAt) {
+    return false;
+  }
+  return Date.now() - account.lastInboundAt < RECENT_ACTIVITY_THRESHOLD_MS;
+}
+
+export function deriveRunningStatus(account: ChannelAccountSnapshot): string {
+  if (account.running) {
+    return t("common.yes");
+  }
+  if (hasRecentActivity(account)) {
+    return t("common.active");
+  }
+  return t("common.no");
+}
+
+export function deriveConnectedStatus(account: ChannelAccountSnapshot): string {
+  if (account.connected === true) {
+    return t("common.yes");
+  }
+  if (account.connected === false) {
+    return t("common.no");
+  }
+  if (hasRecentActivity(account)) {
+    return t("common.active");
+  }
+  return t("common.na");
 }

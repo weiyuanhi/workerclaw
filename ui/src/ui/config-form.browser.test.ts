@@ -502,4 +502,147 @@ describe("config form renderer", () => {
     removeButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     expect(onPatch).toHaveBeenCalledWith(["accounts"], {});
   });
+
+  it("opens a modal to create model providers", () => {
+    const onPatch = vi.fn();
+    const onRequestUpdate = vi.fn();
+    const container = document.createElement("div");
+    const schema = {
+      type: "object",
+      properties: {
+        models: {
+          type: "object",
+          properties: {
+            providers: {
+              type: "object",
+              additionalProperties: {
+                type: "object",
+                properties: {
+                  baseUrl: { type: "string" },
+                  apiKey: { type: "string" },
+                  api: { type: "string", enum: ["openai-completions", "anthropic-messages"] },
+                  models: {
+                    type: "array",
+                    items: { type: "object", properties: { id: { type: "string" } } },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    };
+    const analysis = analyzeConfigSchema(schema);
+
+    render(
+      renderConfigForm({
+        schema: analysis.schema,
+        uiHints: {},
+        unsupportedPaths: analysis.unsupportedPaths,
+        value: { models: { providers: {} } },
+        onPatch,
+        onRequestUpdate,
+      }),
+      container,
+    );
+
+    const addButton = expectElement(
+      container.querySelector('[data-model-provider-add="true"]'),
+      "model provider add button",
+    );
+    addButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    expect(onRequestUpdate).toHaveBeenCalled();
+
+    render(
+      renderConfigForm({
+        schema: analysis.schema,
+        uiHints: {},
+        unsupportedPaths: analysis.unsupportedPaths,
+        value: { models: { providers: {} } },
+        onPatch,
+        onRequestUpdate,
+      }),
+      container,
+    );
+
+    const modal = expectElement(
+      container.querySelector('[data-model-provider-modal="true"]'),
+      "model provider modal",
+    );
+    expect(modal.querySelector('[data-model-provider-kind="cloud"]')).not.toBeNull();
+
+    const customKindButton = expectElement(
+      modal.querySelector('[data-model-provider-kind="custom"]'),
+      "custom provider kind button",
+    );
+    customKindButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+
+    render(
+      renderConfigForm({
+        schema: analysis.schema,
+        uiHints: {},
+        unsupportedPaths: analysis.unsupportedPaths,
+        value: { models: { providers: {} } },
+        onPatch,
+        onRequestUpdate,
+      }),
+      container,
+    );
+
+    expect(modal.querySelector('[data-model-provider-entry-form="true"]')).not.toBeNull();
+    const providerIdInput = expectElement(
+      container.querySelector('[data-model-provider-id-input="true"]'),
+      "provider id input",
+    ) as HTMLInputElement;
+    providerIdInput.value = "my-local-llm";
+    providerIdInput.dispatchEvent(new Event("input", { bubbles: true }));
+
+    render(
+      renderConfigForm({
+        schema: analysis.schema,
+        uiHints: {},
+        unsupportedPaths: analysis.unsupportedPaths,
+        value: { models: { providers: {} } },
+        onPatch,
+        onRequestUpdate,
+      }),
+      container,
+    );
+
+    const entryForm = expectElement(
+      container.querySelector('[data-model-provider-entry-form="true"]'),
+      "provider entry form",
+    );
+    const baseUrlInput = expectElement(
+      entryForm.querySelector('input.cfg-input[type="text"]'),
+      "provider base url input",
+    ) as HTMLInputElement;
+    baseUrlInput.value = "https://llm.example.com/v1";
+    baseUrlInput.dispatchEvent(new Event("input", { bubbles: true }));
+
+    render(
+      renderConfigForm({
+        schema: analysis.schema,
+        uiHints: {},
+        unsupportedPaths: analysis.unsupportedPaths,
+        value: { models: { providers: {} } },
+        onPatch,
+        onRequestUpdate,
+      }),
+      container,
+    );
+
+    const submitButton = expectElement(
+      container.querySelector('[data-model-provider-submit="true"]'),
+      "model provider submit button",
+    );
+    submitButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+
+    expect(onPatch).toHaveBeenCalledWith(["models", "providers"], {
+      "my-local-llm": {
+        baseUrl: "https://llm.example.com/v1",
+        models: [],
+      },
+    });
+  });
 });

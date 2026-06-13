@@ -621,6 +621,38 @@ describe("chat playbook button", () => {
   });
 });
 
+describe("chat skill button", () => {
+  it("renders the create skill control when a handler is provided", () => {
+    const onRequestDraftSkill = vi.fn();
+    const container = renderChatView({
+      connected: true,
+      canRequestDraftSkill: true,
+      onRequestDraftSkill,
+    });
+
+    const button = container.querySelector<HTMLButtonElement>(
+      'button[aria-label="Create skill"]',
+    );
+    expect(button).toBeInstanceOf(HTMLButtonElement);
+    expect(button?.disabled).toBe(false);
+    button!.click();
+    expect(onRequestDraftSkill).toHaveBeenCalledTimes(1);
+  });
+
+  it("disables the create skill control when the session has no messages", () => {
+    const container = renderChatView({
+      connected: true,
+      canRequestDraftSkill: false,
+      onRequestDraftSkill: () => undefined,
+    });
+
+    const button = container.querySelector<HTMLButtonElement>(
+      'button[aria-label="Create skill"]',
+    );
+    expect(button?.disabled).toBe(true);
+  });
+});
+
 describe("chat composer toolbar help", () => {
   it("opens the toolbar help panel from the guide button", () => {
     const onComposerToolbarHelpToggle = vi.fn();

@@ -21,7 +21,11 @@ import {
   resolveToolSections,
 } from "./agents-utils.ts";
 import type { SkillGroup } from "./skills-grouping.ts";
-import { groupSkills, resolveSkillGroupLabel } from "./skills-grouping.ts";
+import {
+  groupSkills,
+  resolvePlaybooksSubdirFromConfig,
+  resolveSkillGroupLabel,
+} from "./skills-grouping.ts";
 import {
   computeSkillMissing,
   computeSkillReasons,
@@ -756,7 +760,9 @@ export function renderAgentSkills(params: {
         ).includes(filter),
       )
     : rawSkills;
-  const groups = groupSkills(filtered);
+  const groups = groupSkills(filtered, {
+    playbooksSubdir: resolvePlaybooksSubdirFromConfig(params.configForm),
+  });
   const enabledCount = usingAllowlist
     ? rawSkills.filter((skill) => allowSet.has(skill.name)).length
     : rawSkills.length;
@@ -896,7 +902,8 @@ function renderAgentSkillGroup(
     onToggle: (agentId: string, skillName: string, enabled: boolean) => void;
   },
 ) {
-  const collapsedByDefault = group.id === "workspace" || group.id === "built-in";
+  const collapsedByDefault =
+    group.id === "workspace" || group.id === "workspace-playbooks" || group.id === "built-in";
   return html`
     <details class="agent-skills-group" ?open=${!collapsedByDefault}>
       <summary class="agent-skills-header">

@@ -1162,3 +1162,82 @@
     flex-direction: column;
   }
 }
+
+/* ---- Settings modal ---- */
+
+.dreaming-settings-modal {
+  width: min(560px, calc(100vw - 32px));
+  max-height: min(80vh, 720px);
+  overflow: auto;
+}
+
+.dreaming-settings-modal__body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 12px;
+}
+
+.dreaming-settings-modal__toggle-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+}
+
+.dreaming-settings-modal__toggle-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dreaming-settings-modal__segmented {
+  margin-top: 8px;
+}
+
+.dreaming-settings-modal__custom-frequency {
+  margin-top: 8px;
+}
+
+.dreaming-settings-modal__resolved-frequency {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.dreaming-settings-modal__phases {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  margin: 0;
+}
+
+.dreaming-settings-modal__phase-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.dreaming-settings-modal__phase {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.dreaming-settings-modal__select {
+  width: 100%;
+}
+
+.dreaming-settings-modal__fallback-hint {
+  margin-top: 6px;
+}
+
+.dreaming-settings-modal__note {
+  margin-top: 4px;
+}

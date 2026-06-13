@@ -74,6 +74,136 @@ export async function loadChannels(
   await refresh;
 }
 
+export const WEIXIN_CHANNEL_ID = "openclaw-weixin";
+/** Matches `web.login.wait` timeout for WeChat QR login in the Control UI. */
+export const WEIXIN_LOGIN_WAIT_TIMEOUT_MS = 120_000;
+
+export function shouldAutoWaitWeixinLogin(state: ChannelsState): boolean {
+  return Boolean(state.weixinLoginQrUrl && state.weixinLoginSessionKey);
+}
+
+export async function startWeixinLogin(state: ChannelsState, force: boolean) {
+  if (!state.client || !state.connected || state.weixinBusy) {
+    return;
+  }
+  state.weixinBusy = true;
+  try {
+    const res = await state.client.request<{
+      message?: string;
+      qrDataUrl?: string;
+      connected?: boolean;
+      sessionKey?: string;
+    }>("web.login.start", {
+      channel: WEIXIN_CHANNEL_ID,
+      force,
+      timeoutMs: 30000,
+    });
+    state.weixinLoginMessage = res.message ?? null;
+    state.weixinLoginQrUrl = res.qrDataUrl ?? null;
+    state.weixinLoginSessionKey =
+      typeof res.sessionKey === "string" ? res.sessionKey : state.weixinLoginSessionKey;
+    if (res.connected) {
+      state.weixinLoginQrUrl = null;
+      state.weixinLoginSessionKey = null;
+    }
+  } catch (err) {
+    state.weixinLoginMessage = String(err);
+    state.weixinLoginQrUrl = null;
+    state.weixinLoginSessionKey = null;
+  } finally {
+    state.weixinBusy = false;
+  }
+}
+
+export async function waitWeixinLogin(state: ChannelsState) {
+  if (!state.client || !state.connected || state.weixinBusy) {
+    return;
+  }
+  state.weixinBusy = true;
+  try {
+    const res = await state.client.request<{
+      message?: string;
+      connected?: boolean;
+      qrDataUrl?: string;
+      sessionKey?: string;
+    }>("web.login.wait", {
+      channel: WEIXIN_CHANNEL_ID,
+      timeoutMs: WEIXIN_LOGIN_WAIT_TIMEOUT_MS,
+      sessionKey: state.weixinLoginSessionKey ?? undefined,
+    });
+    state.weixinLoginMessage = res.message ?? null;
+    if (res.qrDataUrl) {
+      state.weixinLoginQrUrl = res.qrDataUrl;
+    } else if (res.connected) {
+      state.weixinLoginQrUrl = null;
+      state.weixinLoginSessionKey = null;
+    }
+    if (typeof res.sessionKey === "string") {
+      state.weixinLoginSessionKey = res.sessionKey;
+    }
+  } catch (err) {
+    state.weixinLoginMessage = String(err);
+  } finally {
+    state.weixinBusy = false;
+  }
+}
+
+/** Shows a WeChat QR code and waits for phone confirmation in one uninterrupted flow. */
+export async function runWeixinLoginFlow(state: ChannelsState, force: boolean) {
+  if (!state.client || !state.connected || state.weixinBusy) {
+    return;
+  }
+  state.weixinBusy = true;
+  try {
+    const start = await state.client.request<{
+      message?: string;
+      qrDataUrl?: string;
+      connected?: boolean;
+      sessionKey?: string;
+    }>("web.login.start", {
+      channel: WEIXIN_CHANNEL_ID,
+      force,
+      timeoutMs: 30000,
+    });
+    state.weixinLoginMessage = start.message ?? null;
+    state.weixinLoginQrUrl = start.qrDataUrl ?? null;
+    state.weixinLoginSessionKey =
+      typeof start.sessionKey === "string" ? start.sessionKey : state.weixinLoginSessionKey;
+    if (start.connected) {
+      state.weixinLoginQrUrl = null;
+      state.weixinLoginSessionKey = null;
+      return;
+    }
+    if (!shouldAutoWaitWeixinLogin(state)) {
+      return;
+    }
+    const wait = await state.client.request<{
+      message?: string;
+      connected?: boolean;
+      qrDataUrl?: string;
+      sessionKey?: string;
+    }>("web.login.wait", {
+      channel: WEIXIN_CHANNEL_ID,
+      timeoutMs: WEIXIN_LOGIN_WAIT_TIMEOUT_MS,
+      sessionKey: state.weixinLoginSessionKey ?? undefined,
+    });
+    state.weixinLoginMessage = wait.message ?? null;
+    if (wait.qrDataUrl) {
+      state.weixinLoginQrUrl = wait.qrDataUrl;
+    } else if (wait.connected) {
+      state.weixinLoginQrUrl = null;
+      state.weixinLoginSessionKey = null;
+    }
+    if (typeof wait.sessionKey === "string") {
+      state.weixinLoginSessionKey = wait.sessionKey;
+    }
+  } catch (err) {
+    state.weixinLoginMessage = String(err);
+  } finally {
+    state.weixinBusy = false;
+  }
+}
+
 export async function startWhatsAppLogin(state: ChannelsState, force: boolean) {
   if (!state.client || !state.connected || state.whatsappBusy) {
     return;
