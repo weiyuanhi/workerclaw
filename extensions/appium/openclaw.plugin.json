@@ -1,0 +1,89 @@
+{
+  "id": "appium",
+  "activation": {
+    "onStartup": true
+  },
+  "skills": ["./skills"],
+  "name": "Appium",
+  "description": "Install Appium, list devices, and run mobile UI test commands from OpenClaw agents.",
+  "contracts": {
+    "tools": ["appium_status", "appium_setup", "appium_devices", "appium_run"]
+  },
+  "toolMetadata": {
+    "appium_status": {
+      "optional": true
+    },
+    "appium_setup": {
+      "optional": true
+    },
+    "appium_devices": {
+      "optional": true
+    },
+    "appium_run": {
+      "optional": true
+    }
+  },
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "serverPort": {
+        "type": "integer",
+        "minimum": 1,
+        "description": "Local Appium server port (default 4723)."
+      },
+      "serverUrl": {
+        "type": "string",
+        "description": "Override Appium server base URL (default http://127.0.0.1:<serverPort>)."
+      },
+      "testWorkdir": {
+        "type": "string",
+        "description": "Default working directory for appium_run commands."
+      },
+      "defaultPlatform": {
+        "type": "string",
+        "enum": ["android", "ios"],
+        "description": "Default mobile platform when a tool call omits platform."
+      },
+      "appiumPath": {
+        "type": "string",
+        "description": "Explicit Appium CLI path. When omitted, OpenClaw probes PATH."
+      },
+      "adbPath": {
+        "type": "string",
+        "description": "Explicit adb path for Android device checks."
+      },
+      "autoStartServer": {
+        "type": "boolean",
+        "description": "Start a local Appium server before appium_run when none is healthy."
+      },
+      "runTimeoutSec": {
+        "type": "integer",
+        "minimum": 1,
+        "description": "Default timeout for appium_run shell commands."
+      },
+      "androidDriver": {
+        "type": "string",
+        "description": "Android driver id installed by appium_setup (default uiautomator2)."
+      },
+      "iosDriver": {
+        "type": "string",
+        "description": "iOS driver id installed by appium_setup (default xcuitest)."
+      }
+    }
+  },
+  "uiHints": {
+    "testWorkdir": {
+      "label": "Test suite directory",
+      "help": "Folder containing your Appium/WebdriverIO/Maestro scripts."
+    },
+    "serverPort": {
+      "label": "Appium port",
+      "help": "Local Appium server port used for health checks and auto-start."
+    },
+    "autoStartServer": {
+      "label": "Auto-start Appium",
+      "help": "Start Appium locally before running test commands when /status is unhealthy."
+    }
+  }
+}
