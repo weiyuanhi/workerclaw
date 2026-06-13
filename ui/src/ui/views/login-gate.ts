@@ -298,7 +298,7 @@ export function renderLoginGate(state: AppViewState) {
                 const v = (e.target as HTMLInputElement).value;
                 state.applySettings({ ...state.settings, gatewayUrl: v });
               }}
-              placeholder="ws://127.0.0.1:18789"
+              placeholder=${t("login.wsUrlPlaceholder")}
             />
           </label>
           <label class="field">
@@ -313,7 +313,9 @@ export function renderLoginGate(state: AppViewState) {
                   const v = (e.target as HTMLInputElement).value;
                   state.applySettings({ ...state.settings, token: v });
                 }}
-                placeholder="OPENCLAW_GATEWAY_TOKEN (${t("login.passwordPlaceholder")})"
+                placeholder=${t("login.tokenPlaceholder", {
+                  optional: t("login.passwordPlaceholder"),
+                })}
                 @keydown=${(e: KeyboardEvent) => {
                   if (e.key === "Enter") {
                     state.connect();

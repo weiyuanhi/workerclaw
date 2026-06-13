@@ -7,18 +7,18 @@ import {
 } from "./ui-only.js";
 
 describe("ui-only product mode", () => {
-  it("is enabled in this fork", () => {
-    expect(isUiOnlyProduct()).toBe(true);
+  it("is disabled so channels can run in this fork", () => {
+    expect(isUiOnlyProduct()).toBe(false);
   });
 
-  it("blocks removed messaging UI tabs", () => {
-    expect(isUiOnlyBlockedUiTab("channels")).toBe(true);
-    expect(isUiOnlyBlockedUiTab("cron")).toBe(true);
+  it("does not block messaging UI tabs when product mode is off", () => {
+    expect(isUiOnlyBlockedUiTab("channels")).toBe(false);
+    expect(isUiOnlyBlockedUiTab("cron")).toBe(false);
     expect(isUiOnlyBlockedUiTab("chat")).toBe(false);
   });
 
-  it("skips channel and cron runtime services", () => {
-    expect(shouldSkipChannelStartup()).toBe(true);
-    expect(shouldSkipCronService()).toBe(true);
+  it("does not skip channel and cron runtime services when product mode is off", () => {
+    expect(shouldSkipChannelStartup()).toBe(false);
+    expect(shouldSkipCronService()).toBe(false);
   });
 });

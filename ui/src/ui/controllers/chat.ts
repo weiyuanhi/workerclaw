@@ -1004,6 +1004,31 @@ export async function requestSkillWorkshopRevisionChatSend(
   return normalizeChatSendAck(payload, params.runId);
 }
 
+export async function requestDraftPlaybookChatSend(
+  state: ChatState,
+  params: {
+    message: string;
+    runId: string;
+    sessionKey?: string;
+    agentId?: string;
+    targetAgentId?: string;
+  },
+): Promise<ChatSendAck> {
+  const routing = resolveChatSendRouting(state, {
+    sessionKey: params.sessionKey,
+    agentId: params.targetAgentId,
+  });
+  const payload = await state.client!.request("skills.proposals.requestDraftPlaybook", {
+    ...(params.agentId ? { agentId: normalizeAgentId(params.agentId) } : {}),
+    ...(routing.selectedAgentId ? { targetAgentId: routing.selectedAgentId } : {}),
+    message: params.message,
+    sessionKey: routing.sessionKey,
+    ...(routing.sessionId ? { sessionId: routing.sessionId } : {}),
+    idempotencyKey: params.runId,
+  });
+  return normalizeChatSendAck(payload, params.runId);
+}
+
 type AssistantMessageNormalizationOptions = {
   roleRequirement: "required" | "optional";
   roleCaseSensitive?: boolean;

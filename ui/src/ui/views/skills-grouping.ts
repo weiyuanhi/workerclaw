@@ -1,4 +1,5 @@
 // Control UI view renders skills grouping screen content.
+import { t } from "../../i18n/index.ts";
 import type { SkillStatusEntry } from "../types.ts";
 
 export type SkillGroup = {
@@ -38,4 +39,16 @@ export function groupSkills(skills: SkillStatusEntry[]): SkillGroup[] {
     ordered.push(other);
   }
   return ordered;
+}
+
+export function resolveSkillGroupLabel(group: SkillGroup): string {
+  const keyById: Record<string, string> = {
+    workspace: "agents.skillsPanel.groups.workspace",
+    "built-in": "agents.skillsPanel.groups.builtIn",
+    installed: "agents.skillsPanel.groups.installed",
+    extra: "agents.skillsPanel.groups.extra",
+    other: "agents.skillsPanel.groups.other",
+  };
+  const key = keyById[group.id];
+  return key ? t(key) : group.label;
 }

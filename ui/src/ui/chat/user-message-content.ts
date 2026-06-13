@@ -1,4 +1,5 @@
 // Control UI chat module implements user message content behavior.
+import { t } from "../../i18n/index.ts";
 import type { ChatAttachment } from "../ui-types.ts";
 import { getChatAttachmentPreviewUrl } from "./attachment-payload-store.ts";
 
@@ -21,7 +22,9 @@ function isInlineDataUrl(value: string): boolean {
 
 function formatInlineImageAttachmentPlaceholder(attachment: ChatAttachment): string {
   const label = attachment.fileName?.trim();
-  return label ? `Attached image: ${label}` : "Attached image";
+  return label
+    ? t("chat.userMessage.attachedImageNamed", { name: label })
+    : t("chat.userMessage.attachedImage");
 }
 
 export function buildUserChatMessageContentBlocks(
@@ -55,7 +58,7 @@ export function buildUserChatMessageContentBlocks(
       attachment: {
         url: previewUrl,
         kind: attachment.mimeType.startsWith("audio/") ? "audio" : "document",
-        label: attachment.fileName?.trim() || "Attached file",
+        label: attachment.fileName?.trim() || t("chat.userMessage.attachedFile"),
         mimeType: attachment.mimeType,
       },
     });

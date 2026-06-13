@@ -32,6 +32,7 @@ import {
   refreshSlashCommands,
 } from "./chat/slash-commands.ts";
 import { formatConnectError } from "./connect-error.ts";
+import { t } from "../i18n/index.ts";
 import { resolveControlUiAuthHeader } from "./control-ui-auth.ts";
 import {
   controlUiNowMs,
@@ -44,6 +45,7 @@ import {
   appendUserChatMessage,
   loadChatHistory,
   requestChatSend,
+  requestDraftPlaybookChatSend,
   requestSkillWorkshopRevisionChatSend,
   sendDetachedChatMessage,
   sendSteerChatMessage,
@@ -1995,6 +1997,88 @@ function injectCommandResult(host: ChatHost, content: string) {
       timestamp: Date.now(),
     },
   ];
+}
+
+export async function handleRequestDraftPlaybook(host: ChatHost) {
+  if (!host.connected || !host.client) {
+    setChatError(host, "Gateway not connected");
+    return;
+  }
+  if (host.chatSending) {
+    return;
+  }
+  if (host.chatMessages.length === 0) {
+    setChatError(host, t("chat.playbook.createDisabledNoMessages"));
+    return;
+  }
+
+  const message = t("chat.playbook.requestMessage");
+  const runId = generateUUID();
+  const startedAt = Date.now();
+  const requestStartedAtMs = controlUiNowMs();
+  const sessionKey = host.sessionKey;
+
+  resetToolStream(host as unknown as Parameters<typeof resetToolStream>[0]);
+  resetChatScroll(host as unknown as Parameters<typeof resetChatScroll>[0]);
+
+  host.chatSending = true;
+  setChatError(host, null);
+  reconcileChatRunLifecycle(host as unknown as Parameters<typeof reconcileChatRunLifecycle>[0], {
+    clearRunStatus: true,
+  });
+
+  try {
+    const ack = await requestDraftPlaybookChatSend(host as unknown as ChatState, {
+      message,
+      runId,
+      sessionKey,
+    });
+    appendUserChatMessage(host as unknown as ChatState, message, undefined, startedAt);
+    if (ack.status === "ok") {
+      reconcileChatRunLifecycle(
+        host as unknown as Parameters<typeof reconcileChatRunLifecycle>[0],
+        {
+          outcome: "done",
+          sessionStatus: "done",
+          runId: ack.runId,
+          sessionKey,
+          clearLocalRun: true,
+          clearChatStream: true,
+          clearToolStream: true,
+          clearSideResultTerminalRuns: true,
+          publishRunStatus: false,
+          armLocalTerminalReconcile: true,
+        },
+      );
+      void loadChatHistory(host as unknown as ChatState);
+    } else {
+      const hasAlreadyAdoptedRunStream =
+        host.chatRunId === ack.runId && typeof host.chatStream === "string";
+      host.chatRunId = ack.runId;
+      if (!hasAlreadyAdoptedRunStream) {
+        host.chatStream = "";
+        (host as ChatHost & { chatStreamStartedAt?: number | null }).chatStreamStartedAt =
+          startedAt;
+      }
+    }
+    recordControlUiPerformanceEvent(
+      host as Parameters<typeof recordControlUiPerformanceEvent>[0],
+      "control-ui.chat.send",
+      {
+        phase: "ack",
+        durationMs: roundedControlUiDurationMs(controlUiNowMs() - requestStartedAtMs),
+        runId,
+        sessionKey,
+        kind: "playbook-draft",
+        ackStatus: ack.status,
+      },
+    );
+    scheduleChatScroll(host as unknown as Parameters<typeof scheduleChatScroll>[0], true);
+  } catch (err) {
+    setChatError(host, formatConnectError(err));
+  } finally {
+    host.chatSending = false;
+  }
 }
 
 export async function refreshChat(

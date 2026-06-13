@@ -6,7 +6,7 @@
  */
 import { isTruthyEnvValue } from "../infra/env.js";
 
-export const UI_ONLY_PRODUCT = true;
+export const UI_ONLY_PRODUCT = false;
 
 /** Control UI routes that redirect to Chat in the local app. */
 export const UI_ONLY_BLOCKED_UI_TABS = [

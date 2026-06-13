@@ -2,6 +2,7 @@
 import { html, nothing } from "lit";
 import { unsafeHTML } from "lit/directives/unsafe-html.js";
 import { until } from "lit/directives/until.js";
+import { t } from "../../i18n/index.ts";
 import { getSafeLocalStorage } from "../../local-storage.ts";
 import type { AssistantIdentity } from "../assistant-identity.ts";
 import type { EmbedSandboxMode } from "../embed-sandbox.ts";
@@ -57,8 +58,8 @@ export function formatChatTimestampForDisplay(timestamp: number): ChatTimestampD
   const date = new Date(timestamp);
   if (!Number.isFinite(date.getTime())) {
     return {
-      label: "Unknown date",
-      title: "Unknown date",
+      label: t("chat.grouped.unknownDate"),
+      title: t("chat.grouped.unknownDate"),
       dateTime: "",
     };
   }
@@ -379,7 +380,7 @@ export function renderStreamingGroup(
   basePath?: string,
   authToken?: string | null,
 ) {
-  const name = assistant?.name ?? "Assistant";
+  const name = assistant?.name ?? t("chat.grouped.assistant");
 
   return html`
     <div class="chat-group assistant">
@@ -433,7 +434,7 @@ export function renderMessageGroup(
   },
 ) {
   const normalizedRole = normalizeRoleForGrouping(group.role);
-  const assistantName = opts.assistantName ?? "Assistant";
+  const assistantName = opts.assistantName ?? t("chat.grouped.assistant");
   const resolvedUserName = resolveLocalUserName({
     name: opts.userName ?? null,
     avatar: opts.userAvatar ?? null,
@@ -480,7 +481,7 @@ export function renderMessageGroup(
     ];
     const preview =
       toolLabels.length === 0
-        ? "Tool output"
+        ? t("chat.grouped.toolOutput")
         : toolLabels.length <= 3
           ? toolLabels.join(", ")
           : `${toolLabels.slice(0, 2).join(", ")} +${toolLabels.length - 2} more`;
@@ -520,7 +521,7 @@ export function renderMessageGroup(
               >
               <span class="chat-activity-group__preview">${preview}</span>
               ${hasError
-                ? html`<span class="chat-activity-group__badge">${icons.x}<span>Error</span></span>`
+                ? html`<span class="chat-activity-group__badge">${icons.x}<span>${t("chat.grouped.error")}</span></span>`
                 : nothing}
               <span
                 class="collapse-chevron ${activityExpanded ? "" : "collapse-chevron--collapsed"}"
@@ -563,7 +564,7 @@ export function renderMessageGroup(
               : nothing}
           </div>
           <div class="chat-group-footer">
-            <span class="chat-sender-name">Activity</span>
+            <span class="chat-sender-name">${t("chat.grouped.activity")}</span>
             ${renderChatTimestamp(group.timestamp)}
             ${opts.onDelete ? renderDeleteButton(opts.onDelete, "right") : nothing}
           </div>
@@ -752,9 +753,9 @@ function renderMessageMeta(meta: GroupMeta | null) {
 
   return html`
     <details class="msg-meta">
-      <summary class="msg-meta__summary" title="Show message context details">
+      <summary class="msg-meta__summary" title=${t("chat.grouped.showContext")}>
         <span class="msg-meta__summary-icon" aria-hidden="true">${icons.chevronRight}</span>
-        <span>Context</span>
+        <span>${t("chat.grouped.context")}</span>
       </summary>
       <span class="msg-meta__details">${parts}</span>
     </details>
@@ -848,8 +849,8 @@ function renderDeleteButton(onDelete: () => void, side: DeleteConfirmSide) {
     <span class="chat-delete-wrap">
       <button
         class="chat-group-delete"
-        title="Delete"
-        aria-label="Delete message"
+        title=${t("chat.grouped.delete")}
+        aria-label=${t("chat.grouped.deleteMessage")}
         @click=${(e: Event) => {
           if (shouldSkipDeleteConfirm()) {
             onDelete();
@@ -865,14 +866,14 @@ function renderDeleteButton(onDelete: () => void, side: DeleteConfirmSide) {
           const popover = document.createElement("div");
           popover.className = `chat-delete-confirm chat-delete-confirm--${side}`;
           popover.innerHTML = `
-            <p class="chat-delete-confirm__text">Delete this message?</p>
+            <p class="chat-delete-confirm__text">${t("chat.grouped.deleteConfirm")}</p>
             <label class="chat-delete-confirm__remember">
               <input type="checkbox" class="chat-delete-confirm__check" />
-              <span>Don't ask again</span>
+              <span>${t("chat.grouped.dontAskAgain")}</span>
             </label>
             <div class="chat-delete-confirm__actions">
-              <button class="chat-delete-confirm__cancel" type="button">Cancel</button>
-              <button class="chat-delete-confirm__yes" type="button">Delete</button>
+              <button class="chat-delete-confirm__cancel" type="button">${t("common.cancel")}</button>
+              <button class="chat-delete-confirm__yes" type="button">${t("common.delete")}</button>
             </div>
           `;
           wrap.appendChild(popover);
@@ -968,7 +969,7 @@ function renderMessageImages(images: RenderableImageBlock[], opts?: ImageRenderO
   const renderImageElement = (img: RenderableImageBlock, previewUrl: string) => html`
     <img
       src=${previewUrl}
-      alt=${img.alt ?? "Attached image"}
+      alt=${img.alt ?? t("chat.grouped.attachedImage")}
       class="chat-message-image"
       width=${img.width ?? nothing}
       height=${img.height ?? nothing}
@@ -1001,7 +1002,7 @@ function renderReplyPill(replyTarget: NormalizedMessage["replyTarget"]) {
       <span class="chat-reply-pill__icon">${icons.messageSquare}</span>
       <span class="chat-reply-pill__label">
         ${replyTarget.kind === "current"
-          ? "Replying to current message"
+          ? t("chat.grouped.replyingToCurrent")
           : `Replying to ${replyTarget.id}`}
       </span>
     </div>
@@ -1261,7 +1262,7 @@ function resolveAssistantAttachmentAvailability(
     return { status: "available" };
   }
   if (!isLocalAttachmentPreviewAllowed(source, localMediaPreviewRoots)) {
-    return { status: "unavailable", reason: "Outside allowed folders", checkedAt: Date.now() };
+    return { status: "unavailable", reason: t("chat.grouped.outsideFolders"), checkedAt: Date.now() };
   }
   const normalizedAuthToken = authToken?.trim() ?? "";
   const cacheKey = `${basePath ?? ""}::${normalizedAuthToken}::${source}`;
@@ -1311,7 +1312,7 @@ function resolveAssistantAttachmentAvailability(
             clearAssistantAttachmentRefreshTimer(cacheKey);
             setAssistantAttachmentAvailability(cacheKey, {
               status: "unavailable",
-              reason: "Attachment unavailable",
+              reason: t("chat.grouped.attachmentUnavailable"),
               checkedAt: Date.now(),
             });
             return;
@@ -1326,7 +1327,7 @@ function resolveAssistantAttachmentAvailability(
           clearAssistantAttachmentRefreshTimer(cacheKey);
           setAssistantAttachmentAvailability(cacheKey, {
             status: "unavailable",
-            reason: payload?.reason?.trim() || "Attachment unavailable",
+            reason: payload?.reason?.trim() || t("chat.grouped.attachmentUnavailable"),
             checkedAt: Date.now(),
           });
         }
@@ -1335,7 +1336,7 @@ function resolveAssistantAttachmentAvailability(
         clearAssistantAttachmentRefreshTimer(cacheKey);
         setAssistantAttachmentAvailability(cacheKey, {
           status: "unavailable",
-          reason: "Attachment unavailable",
+          reason: t("chat.grouped.attachmentUnavailable"),
           checkedAt: Date.now(),
         });
       })
@@ -1405,7 +1406,10 @@ function renderAssistantAttachments(
             return renderAssistantAttachmentStatusCard({
               kind: "image",
               label: attachment.label,
-              badge: availability.status === "checking" ? "Checking..." : "Unavailable",
+              badge:
+                availability.status === "checking"
+                  ? t("chat.grouped.checking")
+                  : t("chat.grouped.unavailable"),
               reason: availability.status === "unavailable" ? availability.reason : undefined,
             });
           }
@@ -1426,10 +1430,12 @@ function renderAssistantAttachments(
                 ${!attachmentUrl
                   ? html`<span
                       class="chat-assistant-attachment-badge chat-assistant-attachment-badge--muted"
-                      >${availability.status === "checking" ? "Checking..." : "Unavailable"}</span
+                      >${availability.status === "checking"
+                        ? t("chat.grouped.checking")
+                        : t("chat.grouped.unavailable")}</span
                     >`
                   : attachment.isVoiceNote
-                    ? html`<span class="chat-assistant-attachment-badge">Voice note</span>`
+                    ? html`<span class="chat-assistant-attachment-badge">${t("chat.grouped.voiceNote")}</span>`
                     : nothing}
               </div>
               ${attachmentUrl
@@ -1447,7 +1453,10 @@ function renderAssistantAttachments(
             return renderAssistantAttachmentStatusCard({
               kind: "video",
               label: attachment.label,
-              badge: availability.status === "checking" ? "Checking..." : "Unavailable",
+              badge:
+                availability.status === "checking"
+                  ? t("chat.grouped.checking")
+                  : t("chat.grouped.unavailable"),
               reason: availability.status === "unavailable" ? availability.reason : undefined,
             });
           }
@@ -1468,7 +1477,10 @@ function renderAssistantAttachments(
           return renderAssistantAttachmentStatusCard({
             kind: "document",
             label: attachment.label,
-            badge: availability.status === "checking" ? "Checking..." : "Unavailable",
+            badge:
+              availability.status === "checking"
+                ? t("chat.grouped.checking")
+                : t("chat.grouped.unavailable"),
             reason: availability.status === "unavailable" ? availability.reason : undefined,
           });
         }
@@ -1556,16 +1568,18 @@ function detectJson(text: string): { parsed: unknown; pretty: string } | null {
 /** Build a short summary label for collapsed JSON (type + key count or array length). */
 function jsonSummaryLabel(parsed: unknown): string {
   if (Array.isArray(parsed)) {
-    return `Array (${parsed.length} item${parsed.length === 1 ? "" : "s"})`;
+    return parsed.length === 1
+      ? t("chat.message.jsonArraySummary", { count: String(parsed.length) })
+      : t("chat.message.jsonArraySummaryMany", { count: String(parsed.length) });
   }
   if (parsed && typeof parsed === "object") {
     const keys = Object.keys(parsed as Record<string, unknown>);
     if (keys.length <= 4) {
       return `{ ${keys.join(", ")} }`;
     }
-    return `Object (${keys.length} keys)`;
+    return t("chat.message.jsonObjectKeys", { count: String(keys.length) });
   }
-  return "JSON";
+  return t("chat.message.jsonBadge");
 }
 
 function renderExpandButton(
@@ -1581,8 +1595,8 @@ function renderExpandButton(
     <button
       class="btn btn--xs chat-expand-btn"
       type="button"
-      title="Open in canvas"
-      aria-label="Open in canvas"
+      title=${t("chat.grouped.openInCanvas")}
+      aria-label=${t("chat.grouped.openInCanvas")}
       @click=${() =>
         onOpenSidebar({
           kind: "markdown",
@@ -1752,12 +1766,12 @@ function renderGroupedMessage(
   const toolPreview =
     markdown && !toolSummaryLabel ? (formatCollapsedToolPreviewText(markdown) ?? "") : "";
   const toolMessageLabelRaw = toolMessageHasError
-    ? "Tool error"
+    ? t("chat.toolCards.toolError")
     : singleToolDisplayDetail && !markdown && !hasImages
       ? singleToolDisplayDetail
       : singleToolDisplay && !markdown && !hasImages
         ? singleToolDisplay.label
-        : "Tool output";
+        : t("chat.toolCards.toolOutput");
   const toolMessageLabel =
     formatCollapsedToolSummaryText(toolMessageLabelRaw) ?? toolMessageLabelRaw;
   const toolMessageIcon = singleToolDisplay ? icons[singleToolDisplay.icon] : icons.zap;
@@ -1804,8 +1818,8 @@ function renderGroupedMessage(
                 ${toolMessageHasError
                   ? html`<span
                       class="chat-tool-msg-summary__error-badge"
-                      aria-label="Tool returned an error"
-                      >${icons.x}<span>Error</span></span
+                      aria-label=${t("chat.toolCards.toolReturnedError")}
+                      >${icons.x}<span>${t("chat.grouped.error")}</span></span
                     >`
                   : nothing}
               </button>
@@ -1831,7 +1845,7 @@ function renderGroupedMessage(
                             ?open=${Boolean(opts.autoExpandToolCalls)}
                           >
                             <summary class="chat-json-summary">
-                              <span class="chat-json-badge">JSON</span>
+                              <span class="chat-json-badge">${t("chat.message.jsonBadge")}</span>
                               <span class="chat-json-label"
                                 >${jsonSummaryLabel(jsonResult.parsed)}</span
                               >
@@ -1896,7 +1910,7 @@ function renderGroupedMessage(
             ${jsonResult
               ? html`<details class="chat-json-collapse">
                   <summary class="chat-json-summary">
-                    <span class="chat-json-badge">JSON</span>
+                    <span class="chat-json-badge">${t("chat.message.jsonBadge")}</span>
                     <span class="chat-json-label">${jsonSummaryLabel(jsonResult.parsed)}</span>
                   </summary>
                   <pre class="chat-json-content"><code>${jsonResult.pretty}</code></pre>
@@ -1921,8 +1935,8 @@ function renderGroupedMessage(
       ${duplicateCount > 1
         ? html`<div
             class="chat-duplicate-count"
-            aria-label=${`${duplicateCount} consecutive identical messages collapsed`}
-            title=${`${duplicateCount} consecutive identical messages collapsed`}
+            aria-label=${t("chat.grouped.duplicateCollapsed", { count: String(duplicateCount) })}
+            title=${t("chat.grouped.duplicateCollapsed", { count: String(duplicateCount) })}
           >
             ×${duplicateCount}
           </div>`

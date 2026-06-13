@@ -1,5 +1,6 @@
 // Control UI chat module implements status indicators behavior.
 import { html, nothing } from "lit";
+import { t } from "../../i18n/index.ts";
 import type { CompactionStatus, FallbackStatus } from "../app-tool-stream.ts";
 import { icons } from "../icons.ts";
 import { CHAT_RUN_STATUS_TOAST_DURATION_MS, type ChatRunUiStatus } from "./run-lifecycle.ts";
@@ -26,10 +27,10 @@ export function renderChatRunStatusIndicator(status: ComposerRunStatus | null | 
   }
   const label =
     status.phase === "in-progress"
-      ? "In progress"
+      ? t("chat.runStatus.inProgress")
       : status.phase === "done"
-        ? "Done"
-        : "Interrupted";
+        ? t("chat.runStatus.done")
+        : t("chat.runStatus.interrupted");
   const icon =
     status.phase === "in-progress"
       ? icons.loader
@@ -41,8 +42,8 @@ export function renderChatRunStatusIndicator(status: ComposerRunStatus | null | 
       class="agent-chat__run-status agent-chat__run-status--${status.phase}"
       role="status"
       aria-live="polite"
-      aria-label=${`Run status: ${label}`}
-      title=${`Run status: ${label}`}
+      aria-label=${t("chat.runStatus.ariaLabel", { label })}
+      title=${t("chat.runStatus.ariaLabel", { label })}
     >
       ${icon}<span class="agent-chat__run-status-label">${label}</span>
     </span>
@@ -60,7 +61,7 @@ export function renderCompactionIndicator(status: CompactionStatus | null | unde
         role="status"
         aria-live="polite"
       >
-        ${icons.loader} Compacting context...
+        ${icons.loader} ${t("chat.compaction.active")}
       </div>
     `;
   }
@@ -73,7 +74,7 @@ export function renderCompactionIndicator(status: CompactionStatus | null | unde
           role="status"
           aria-live="polite"
         >
-          ${icons.check} Context compacted
+          ${icons.check} ${t("chat.compaction.complete")}
         </div>
       `;
     }
@@ -91,18 +92,24 @@ export function renderFallbackIndicator(status: FallbackStatus | null | undefine
     return nothing;
   }
   const details = [
-    `Selected: ${status.selected}`,
-    phase === "cleared" ? `Active: ${status.selected}` : `Active: ${status.active}`,
-    phase === "cleared" && status.previous ? `Previous fallback: ${status.previous}` : null,
-    status.reason ? `Reason: ${status.reason}` : null,
-    status.attempts.length > 0 ? `Attempts: ${status.attempts.slice(0, 3).join(" | ")}` : null,
+    t("chat.fallback.selected", { value: status.selected }),
+    phase === "cleared"
+      ? t("chat.fallback.activeDetail", { value: status.selected })
+      : t("chat.fallback.activeDetail", { value: status.active }),
+    phase === "cleared" && status.previous
+      ? t("chat.fallback.previous", { value: status.previous })
+      : null,
+    status.reason ? t("chat.fallback.reason", { value: status.reason }) : null,
+    status.attempts.length > 0
+      ? t("chat.fallback.attempts", { value: status.attempts.slice(0, 3).join(" | ") })
+      : null,
   ]
     .filter(Boolean)
     .join(" • ");
   const message =
     phase === "cleared"
-      ? `Fallback cleared: ${status.selected}`
-      : `Fallback active: ${status.active}`;
+      ? t("chat.fallback.cleared", { selected: status.selected })
+      : t("chat.fallback.active", { active: status.active });
   const className =
     phase === "cleared"
       ? "compaction-indicator compaction-indicator--fallback-cleared"

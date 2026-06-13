@@ -11,6 +11,7 @@ import {
   loadChatHistory,
   requestChatSend,
   requestSkillWorkshopRevisionChatSend,
+  requestDraftPlaybookChatSend,
   sendChatMessage,
   type ChatEventPayload,
   type ChatState,
@@ -1903,6 +1904,31 @@ describe("sendChatMessage", () => {
       sessionKey: "global",
       sessionId: "session-visible",
       idempotencyKey: "run-revision",
+    });
+  });
+
+  it("requests playbook drafts with visible message and target agent routing", async () => {
+    const request = vi.fn().mockResolvedValue({ runId: "run-playbook", status: "started" });
+    const state = createState({
+      sessionKey: "global",
+      currentSessionId: "session-visible",
+      assistantAgentId: "target",
+      connected: true,
+      client: { request } as unknown as ChatState["client"],
+    });
+
+    const result = await requestDraftPlaybookChatSend(state, {
+      message: "Create a playbook from our conversation.",
+      runId: "run-playbook",
+    });
+
+    expect(result).toEqual({ runId: "run-playbook", status: "started" });
+    expect(request).toHaveBeenCalledWith("skills.proposals.requestDraftPlaybook", {
+      targetAgentId: "target",
+      message: "Create a playbook from our conversation.",
+      sessionKey: "global",
+      sessionId: "session-visible",
+      idempotencyKey: "run-playbook",
     });
   });
 

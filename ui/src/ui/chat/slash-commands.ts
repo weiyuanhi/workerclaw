@@ -4,6 +4,7 @@ import type {
   CommandsListResult,
 } from "../../../../packages/gateway-protocol/src/index.js";
 import { buildBuiltinChatCommands } from "../../../../src/auto-reply/commands-registry.shared.js";
+import { t } from "../../i18n/index.ts";
 import type { GatewayBrowserClient } from "../gateway.ts";
 import type { IconName } from "../icons.ts";
 import { normalizeLowercaseStringOrEmpty } from "../string-coerce.ts";
@@ -151,6 +152,13 @@ const COMMAND_DESCRIPTION_OVERRIDES: Partial<Record<string, string>> = {
   steer: "Inject a message into the active run",
 };
 
+function resolveSlashCommandDescription(key: string, fallback: string): string {
+  const normalized = key.replace(/[:.-]/g, "_");
+  const i18nKey = `chat.slashCommands.${normalized}`;
+  const translated = t(i18nKey);
+  return translated !== i18nKey ? translated : fallback;
+}
+
 const COMMAND_ARGS_OVERRIDES: Partial<Record<string, string>> = {
   steer: "<message>",
 };
@@ -236,7 +244,10 @@ function toSlashCommand(
     key: command.key,
     name,
     aliases: getSlashAliases(command).filter((alias) => alias !== name),
-    description: COMMAND_DESCRIPTION_OVERRIDES[command.key] ?? command.description,
+    description: resolveSlashCommandDescription(
+      command.key,
+      COMMAND_DESCRIPTION_OVERRIDES[command.key] ?? command.description,
+    ),
     args: COMMAND_ARGS_OVERRIDES[command.key] ?? formatArgs(command),
     icon: mapIcon(command),
     category: mapCategory(command),
@@ -308,6 +319,13 @@ function getArgChoices(arg: Record<string, unknown>): LocalArgChoice[] {
     });
 }
 
+function localizeUiSlashCommand(command: SlashCommandDef): SlashCommandDef {
+  return {
+    ...command,
+    description: resolveSlashCommandDescription(command.key, command.description),
+  };
+}
+
 function buildLocalSlashCommands(): SlashCommandDef[] {
   const builtins = buildBuiltinChatCommands()
     .map((command) => ({
@@ -325,7 +343,7 @@ function buildLocalSlashCommands(): SlashCommandDef[] {
     }))
     .map((command) => toSlashCommand(command, "local"))
     .filter((command): command is SlashCommandDef => command !== null);
-  return [...builtins, ...UI_ONLY_COMMANDS];
+  return [...builtins, ...UI_ONLY_COMMANDS.map(localizeUiSlashCommand)];
 }
 
 function buildReservedLocalSlashNames(localCommands = buildLocalSlashCommands()): Set<string> {
@@ -555,6 +573,11 @@ export function resetSlashCommandsForTest(): void {
 
 const CATEGORY_ORDER: SlashCommandCategory[] = ["session", "model", "tools", "agents"];
 
+export function getSlashCategoryLabel(category: SlashCommandCategory): string {
+  return t(`chat.slashCommands.categories.${category}`);
+}
+
+/** @deprecated Use getSlashCategoryLabel() for localized labels. */
 export const CATEGORY_LABELS: Record<SlashCommandCategory, string> = {
   session: "Session",
   model: "Model",

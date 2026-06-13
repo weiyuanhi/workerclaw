@@ -190,6 +190,11 @@ const entrySpecs: readonly CommandGroupDescriptorSpec<SubCliRegistrar>[] = [
       loadModule: () => import("../hooks-cli.js"),
       exportName: "registerHooksCli",
     },
+    {
+      commandNames: ["channels"],
+      loadModule: () => import("../channels-cli.js"),
+      exportName: "registerChannelsCli",
+    },
   ]),
   {
     commandNames: ["plugins"],

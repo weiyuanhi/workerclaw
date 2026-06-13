@@ -589,6 +589,62 @@ function createDeferred<T>() {
   return { promise, resolve, reject };
 }
 
+describe("chat playbook button", () => {
+  it("renders the create playbook control when a handler is provided", () => {
+    const onRequestDraftPlaybook = vi.fn();
+    const container = renderChatView({
+      connected: true,
+      canRequestDraftPlaybook: true,
+      onRequestDraftPlaybook,
+    });
+
+    const button = container.querySelector<HTMLButtonElement>(
+      'button[aria-label="Create playbook"]',
+    );
+    expect(button).toBeInstanceOf(HTMLButtonElement);
+    expect(button?.disabled).toBe(false);
+    button!.click();
+    expect(onRequestDraftPlaybook).toHaveBeenCalledTimes(1);
+  });
+
+  it("disables the create playbook control when the session has no messages", () => {
+    const container = renderChatView({
+      connected: true,
+      canRequestDraftPlaybook: false,
+      onRequestDraftPlaybook: () => undefined,
+    });
+
+    const button = container.querySelector<HTMLButtonElement>(
+      'button[aria-label="Create playbook"]',
+    );
+    expect(button?.disabled).toBe(true);
+  });
+});
+
+describe("chat composer toolbar help", () => {
+  it("opens the toolbar help panel from the guide button", () => {
+    const onComposerToolbarHelpToggle = vi.fn();
+    const container = renderChatView({
+      connected: true,
+      composerToolbarHelpOpen: true,
+      onComposerToolbarHelpToggle: () => undefined,
+    });
+
+    expect(container.querySelector(".agent-chat__toolbar-help-panel")).not.toBeNull();
+
+    const closed = renderChatView({
+      connected: true,
+      composerToolbarHelpOpen: false,
+      onComposerToolbarHelpToggle,
+    });
+    const guideButton = closed.querySelector<HTMLButtonElement>(
+      'button[aria-controls="agent-chat-composer-toolbar-help-panel"]',
+    );
+    guideButton!.click();
+    expect(onComposerToolbarHelpToggle).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe("chat compaction divider", () => {
   it("renders checkpoint recovery copy and action", () => {
     const onOpenSessionCheckpoints = vi.fn();

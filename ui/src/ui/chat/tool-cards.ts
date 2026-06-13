@@ -383,13 +383,13 @@ export function buildToolCardSidebarContent(card: ToolCard): string {
 
   if (card.outputText?.trim()) {
     sections.push(
-      `### ${isError ? "Tool error" : "Tool output"}\n${formatToolOutputForSidebar(card.outputText)}`,
+      `### ${isError ? t("chat.toolCards.toolError") : t("chat.toolCards.toolOutput")}\n${formatToolOutputForSidebar(card.outputText)}`,
     );
   } else {
     sections.push(
       isError
-        ? "### Tool error\n*No output — tool failed.*"
-        : "### Tool output\n*No output — tool completed successfully.*",
+        ? `### ${t("chat.toolCards.toolError")}\n*${t("chat.toolCards.noOutputFailed")}*`
+        : `### ${t("chat.toolCards.toolOutput")}\n*${t("chat.toolCards.noOutputSuccess")}*`,
     );
   }
 
@@ -453,11 +453,11 @@ export function renderToolPreview(
   return html`
     <div class="chat-tool-card__preview" data-kind="canvas" data-surface=${surface}>
       <div class="chat-tool-card__preview-header">
-        <span class="chat-tool-card__preview-label">${preview.title?.trim() || "Canvas"}</span>
+        <span class="chat-tool-card__preview-label">${preview.title?.trim() || t("chat.toolCards.canvas")}</span>
       </div>
       <div class="chat-tool-card__preview-panel" data-side="canvas">
         ${renderPreviewFrame({
-          title: preview.title?.trim() || "Canvas",
+          title: preview.title?.trim() || t("chat.toolCards.canvas"),
           src: resolveCanvasIframeUrl(
             preview.url,
             options?.canvasPluginSurfaceUrl,
@@ -529,12 +529,12 @@ export function renderRawOutputToggle(text: string) {
         aria-expanded="false"
         @click=${handleRawDetailsToggle}
       >
-        <span>Raw details</span>
+        <span>${t("chat.toolCards.rawDetails")}</span>
         <span class="chat-tool-card__raw-toggle-icon">${icons.chevronDown}</span>
       </button>
       <div class="chat-tool-card__raw-body" hidden>
         ${renderToolDataBlock({
-          label: "Tool output",
+          label: t("chat.toolCards.toolOutput"),
           text,
           expanded: true,
         })}
@@ -591,8 +591,8 @@ function renderCollapsedToolSummary(params: {
         ? html`<span class="chat-tool-msg-summary__names">${displayName}</span>`
         : nothing}
       ${isError
-        ? html`<span class="chat-tool-msg-summary__error-badge" aria-label="Tool returned an error"
-            >${icons.x}<span>Error</span></span
+        ? html`<span class="chat-tool-msg-summary__error-badge" aria-label=${t("chat.toolCards.toolReturnedError")}
+            >${icons.x}<span>${t("chat.grouped.error")}</span></span
           >`
         : nothing}
     </button>
@@ -731,7 +731,7 @@ export function renderExpandedToolCardContent(
           <span>${display.label}</span>
           ${isError
             ? html`<span class="chat-tool-card__status-badge" role="status"
-                >${icons.x}<span>Error</span></span
+                >${icons.x}<span>${t("chat.grouped.error")}</span></span
               >`
             : nothing}
         </div>
@@ -742,8 +742,8 @@ export function renderExpandedToolCardContent(
                   class="chat-tool-card__action-btn"
                   type="button"
                   @click=${() => onOpenSidebar?.(sidebarActionContent)}
-                  title="Open in the side panel"
-                  aria-label="Open tool details in side panel"
+                  title=${t("chat.toolCards.openSidePanel")}
+                  aria-label=${t("chat.toolCards.openSidePanel")}
                 >
                   <span class="chat-tool-card__action-icon">${icons.panelRightOpen}</span>
                 </button>
@@ -754,7 +754,7 @@ export function renderExpandedToolCardContent(
       ${detail ? html`<div class="chat-tool-card__detail">${detail}</div>` : nothing}
       ${hasInput
         ? renderToolDataBlock({
-            label: "Tool input",
+            label: t("chat.toolCards.toolInput"),
             text: card.inputText!,
             expanded: true,
           })
@@ -763,7 +763,7 @@ export function renderExpandedToolCardContent(
         ? card.preview
           ? html`${visiblePreview} ${renderRawOutputToggle(card.outputText!)}`
           : renderToolDataBlock({
-              label: isError ? "Tool error" : "Tool output",
+              label: isError ? t("chat.toolCards.toolError") : t("chat.toolCards.toolOutput"),
               text: card.outputText!,
               expanded: true,
             })
@@ -833,7 +833,7 @@ export function renderToolCardSidebar(
         ${canClick
           ? html`<span
               class="chat-tool-card__action ${isError ? "chat-tool-card__action--error" : ""}"
-              >${isError ? "View error" : hasText || hasPreview ? "View" : ""} ${statusIcon}</span
+              >${isError ? t("chat.toolCards.viewError") : hasText || hasPreview ? t("chat.toolCards.view") : ""} ${statusIcon}</span
             >`
           : nothing}
         ${isEmpty && !canClick
@@ -850,7 +850,7 @@ export function renderToolCardSidebar(
               ? "chat-tool-card__status-text--error"
               : "muted"}"
           >
-            ${isError ? "Failed" : "Completed"}
+            ${isError ? t("chat.toolCards.failed") : t("chat.toolCards.completed")}
           </div>`
         : nothing}
       ${preview

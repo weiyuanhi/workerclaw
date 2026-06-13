@@ -20,6 +20,7 @@ import {
   handleAbortChat as handleAbortChatInternal,
   handleChatDraftChange as handleChatDraftChangeInternal,
   handleChatInputHistoryKey as handleChatInputHistoryKeyInternal,
+  handleRequestDraftPlaybook as handleRequestDraftPlaybookInternal,
   handleSendChat as handleSendChatInternal,
   removeQueuedMessage as removeQueuedMessageInternal,
   resetChatInputHistoryNavigation as resetChatInputHistoryNavigationInternal,
@@ -325,6 +326,7 @@ export class OpenClawApp extends LitElement {
   @state() chatManualRefreshInFlight = false;
   @state() chatHeaderControlsHidden = false;
   @state() chatMobileControlsOpen = false;
+  @state() chatComposerToolbarHelpOpen = false;
   private chatMobileControlsTrigger: HTMLElement | null = null;
   @state() navDrawerOpen = false;
 
@@ -783,6 +785,14 @@ export class OpenClawApp extends LitElement {
         this.chatSessionPickerSurface = null;
       }
     }
+    if (this.chatComposerToolbarHelpOpen) {
+      const insideToolbarHelp = Array.from(this.querySelectorAll(".agent-chat__toolbar-help")).some(
+        (node) => path.includes(node),
+      );
+      if (!insideToolbarHelp) {
+        this.chatComposerToolbarHelpOpen = false;
+      }
+    }
     if (!this.chatMobileControlsOpen) {
       return;
     }
@@ -851,6 +861,9 @@ export class OpenClawApp extends LitElement {
     // Some render callbacks assign tab directly while preparing nested panel state.
     if (changed.has("tab") && this.tab !== "chat" && this.chatMobileControlsOpen) {
       this.setChatMobileControlsOpen(false);
+    }
+    if (changed.has("tab") && this.tab !== "chat" && this.chatComposerToolbarHelpOpen) {
+      this.chatComposerToolbarHelpOpen = false;
     }
     if (!changed.has("sessionKey") || this.agentsPanel !== "tools") {
       return;
@@ -972,6 +985,10 @@ export class OpenClawApp extends LitElement {
         focusTarget.focus();
       }
     });
+  }
+
+  toggleChatComposerToolbarHelp() {
+    this.chatComposerToolbarHelpOpen = !this.chatComposerToolbarHelpOpen;
   }
 
   setTheme(next: ThemeName, context?: Parameters<typeof setThemeInternal>[2]) {
@@ -1159,6 +1176,12 @@ export class OpenClawApp extends LitElement {
       this as unknown as Parameters<typeof handleSendChatInternal>[0],
       messageOverride,
       opts,
+    );
+  }
+
+  async handleRequestDraftPlaybook() {
+    await handleRequestDraftPlaybookInternal(
+      this as unknown as Parameters<typeof handleRequestDraftPlaybookInternal>[0],
     );
   }
 

@@ -5,6 +5,7 @@ import {
   normalizeToolName,
   resolveToolProfilePolicy,
 } from "../../../../src/agents/tool-policy-shared.js";
+import { t } from "../../i18n/index.ts";
 import { DEFAULT_ASSISTANT_AVATAR } from "../assistant-identity.ts";
 import { buildQualifiedChatModelValue } from "../chat-model-ref.ts";
 import { controlUiPublicAssetPath } from "../public-assets.ts";
@@ -147,7 +148,32 @@ export function resolveToolSections(
       })),
     }));
   }
-  return FALLBACK_TOOL_SECTIONS;
+  return localizeFallbackToolSections();
+}
+
+function localizeFallbackToolSections(): AgentToolSection[] {
+  return FALLBACK_TOOL_SECTIONS.map((section) => {
+    const groupKey = `agents.toolsPanel.fallbackGroups.${section.id}`;
+    const groupLabel = t(groupKey);
+    return {
+      ...section,
+      label: groupLabel !== groupKey ? groupLabel : section.label,
+      tools: section.tools.map((tool) => {
+        const descKey = `agents.toolsPanel.fallbackTools.${tool.id}`;
+        const description = t(descKey);
+        return {
+          ...tool,
+          description: description !== descKey ? description : tool.description,
+        };
+      }),
+    };
+  });
+}
+
+function localizeProfileOption(option: { id: string; label: string }) {
+  const key = `agents.toolsPanel.profiles.${option.id}`;
+  const label = t(key);
+  return label !== key ? { ...option, label } : option;
 }
 
 export function resolveToolProfileOptions(
@@ -156,7 +182,7 @@ export function resolveToolProfileOptions(
   if (toolsCatalogResult?.profiles?.length) {
     return toolsCatalogResult.profiles;
   }
-  return PROFILE_OPTIONS;
+  return PROFILE_OPTIONS.map((option) => localizeProfileOption(option));
 }
 
 type ToolPolicy = {
@@ -434,7 +460,9 @@ export function buildAgentContext(
     runtime,
     identityName,
     identityAvatar,
-    skillsLabel: skillFilter ? `${skillCount} selected` : "all skills",
+    skillsLabel: skillFilter
+      ? t("agents.overview.skillsSelected", { count: String(skillCount ?? 0) })
+      : t("agents.overview.allSkills"),
     isDefault: Boolean(defaultId && agent.id === defaultId),
   };
 }

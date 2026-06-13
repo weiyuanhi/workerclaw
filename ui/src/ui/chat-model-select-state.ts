@@ -1,4 +1,5 @@
 // Control UI module implements chat model select state behavior.
+import { t } from "../i18n/index.ts";
 import type { AppViewState } from "./app-view-state.ts";
 import {
   buildCatalogDisplayLookup,
@@ -99,7 +100,9 @@ export function resolveChatModelSelectState(
     currentOverride,
     defaultModel,
     defaultDisplay,
-    defaultLabel: defaultModel ? `Default (${defaultDisplay})` : "Default model",
+    defaultLabel: defaultModel
+      ? t("chat.selectors.defaultModelNamed", { model: defaultDisplay })
+      : t("chat.selectors.defaultModel"),
     options: buildChatModelOptions(catalog, displayLookup, currentOverride, defaultModel),
   };
 }

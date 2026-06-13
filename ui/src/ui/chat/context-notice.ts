@@ -1,5 +1,6 @@
 // Control UI chat module implements context notice behavior.
 import { html, nothing } from "lit";
+import { t } from "../../i18n/index.ts";
 import { icons } from "../icons.ts";
 import type { GatewaySessionRow } from "../types.ts";
 
@@ -121,7 +122,10 @@ export function renderContextNotice(
       class="context-notice ${model.warning ? "context-notice--warning" : "context-notice--usage"}"
       role="status"
       style="--ctx-color:${model.color};--ctx-bg:${model.bg}"
-      title=${`Session context usage: ${model.detail} (${model.pct}%)`}
+      title=${t("chat.contextNotice.usageTitle", {
+        detail: model.detail,
+        pct: String(model.pct),
+      })}
     >
       ${model.warning
         ? html`
@@ -146,7 +150,7 @@ export function renderContextNotice(
               <span class="context-notice__meter-fill" style="width:${model.pct}%"></span>
             </span>
           `}
-      <span>${model.pct}% context used</span>
+      <span>${t("chat.contextNotice.pctUsed", { pct: String(model.pct) })}</span>
       <span class="context-notice__detail">${model.detail}</span>
       ${canRenderCompact
         ? html`
@@ -155,8 +159,8 @@ export function renderContextNotice(
                 ? "context-notice__action--busy"
                 : ""}"
               type="button"
-              title="Compact session context"
-              aria-label="Compact recommended session context"
+              title=${t("chat.contextNotice.compactTitle")}
+              aria-label=${t("chat.contextNotice.compactAria")}
               ?disabled=${compactDisabled}
               @click=${(event: Event) => {
                 event.preventDefault();
@@ -168,7 +172,7 @@ export function renderContextNotice(
               }}
             >
               ${options.compactBusy ? icons.loader : icons.minimize}
-              <span>${options.compactBusy ? "Compacting" : "Compact"}</span>
+              <span>${options.compactBusy ? t("chat.contextNotice.compacting") : t("chat.contextNotice.compact")}</span>
             </button>
           `
         : nothing}

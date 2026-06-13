@@ -287,7 +287,7 @@ function renderSkillWorkshopHeaderControls(state: AppViewState) {
       <div
         class="sw-mode-switch"
         role="tablist"
-        aria-label="Workshop view"
+        aria-label=${t("skillWorkshop.mode.boardView")}
         data-mode=${state.skillWorkshopMode}
       >
         <button
@@ -295,7 +295,7 @@ function renderSkillWorkshopHeaderControls(state: AppViewState) {
           class="sw-mode-switch__opt ${state.skillWorkshopMode === "board" ? "is-active" : ""}"
           role="tab"
           aria-selected=${state.skillWorkshopMode === "board" ? "true" : "false"}
-          title="Board view"
+          title=${t("skillWorkshop.mode.boardView")}
           @click=${() => setSkillWorkshopMode(state, "board")}
         >
           <svg viewBox="0 0 24 24" class="sw-mode-switch__icon" aria-hidden="true">
@@ -303,14 +303,14 @@ function renderSkillWorkshopHeaderControls(state: AppViewState) {
             <rect x="14" y="4" width="7" height="9" rx="1.5" />
             <rect x="14" y="15" width="7" height="5" rx="1.5" />
           </svg>
-          <span>Board</span>
+          <span>${t("skillWorkshop.mode.board")}</span>
         </button>
         <button
           type="button"
           class="sw-mode-switch__opt ${state.skillWorkshopMode === "today" ? "is-active" : ""}"
           role="tab"
           aria-selected=${state.skillWorkshopMode === "today" ? "true" : "false"}
-          title="Today view"
+          title=${t("skillWorkshop.mode.todayView")}
           @click=${() => setSkillWorkshopMode(state, "today")}
         >
           <svg viewBox="0 0 24 24" class="sw-mode-switch__icon" aria-hidden="true">
@@ -319,7 +319,7 @@ function renderSkillWorkshopHeaderControls(state: AppViewState) {
               d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4 7 17M17 7l1.4-1.4"
             />
           </svg>
-          <span>Today</span>
+          <span>${t("skillWorkshop.mode.today")}</span>
         </button>
         <span class="sw-mode-switch__indicator" aria-hidden="true"></span>
       </div>
@@ -544,10 +544,10 @@ function renderSidebarSessions(state: AppViewState) {
   const recent = collapsed ? [] : resolveSidebarRecentSessions(state);
   const newSessionDisabled = !state.connected || state.sessionsLoading || busy || !state.client;
   const newSessionTitle = !state.connected
-    ? "Connect to create a new session"
+    ? t("chat.runControls.connectToCreate")
     : busy
-      ? "Finish the active run before creating a new session"
-      : "New session";
+      ? t("chat.runControls.finishRunFirst")
+      : t("chat.runControls.newSession");
 
   return html`
     <section class="sidebar-sessions ${collapsed ? "sidebar-sessions--collapsed" : ""}">
@@ -1058,18 +1058,18 @@ function buildAssistantAvatarRoute(basePathValue: string | null | undefined, age
 // ── Quick Settings data extraction helpers ──
 
 const KNOWN_CHANNEL_IDS = [
-  { id: "telegram", label: "Telegram" },
-  { id: "discord", label: "Discord" },
-  { id: "slack", label: "Slack" },
-  { id: "whatsapp", label: "WhatsApp" },
-  { id: "signal", label: "Signal" },
-  { id: "imessage", label: "iMessage" },
+  { id: "telegram", labelKey: "channels.telegram.title" },
+  { id: "discord", labelKey: "channels.discord.title" },
+  { id: "slack", labelKey: "channels.slack.title" },
+  { id: "whatsapp", labelKey: "channels.whatsapp.title" },
+  { id: "signal", labelKey: "channels.signal.title" },
+  { id: "imessage", labelKey: "channels.imessage.title" },
 ] as const;
 
 function formatQuickSettingsLabel(id: string): string {
   const trimmed = id.trim();
   if (!trimmed) {
-    return "Unknown";
+    return t("configQuick.channels.unknown");
   }
   return trimmed
     .split(/[-_]+/)
@@ -1093,7 +1093,7 @@ function extractQuickSettingsChannels(state: AppViewState): QuickSettingsChannel
       ? configuredIds.toSorted((a, b) => a.localeCompare(b))
       : KNOWN_CHANNEL_IDS.map(({ id }) => id);
   const knownLabels = new Map<string, string>(
-    KNOWN_CHANNEL_IDS.map(({ id, label }) => [id, label]),
+    KNOWN_CHANNEL_IDS.map(({ id, labelKey }) => [id, t(labelKey)]),
   );
   const channels: QuickSettingsChannel[] = [];
   for (const id of channelIds) {
@@ -1106,7 +1106,7 @@ function extractQuickSettingsChannels(state: AppViewState): QuickSettingsChannel
       id,
       label: knownLabels.get(id) ?? formatQuickSettingsLabel(id),
       connected: hasConfig,
-      detail: hasConfig ? "Configured" : undefined,
+      detail: hasConfig ? t("common.configured") : undefined,
     });
   }
   return channels;
@@ -1397,7 +1397,7 @@ export function renderApp(state: AppViewState) {
     const content =
       typeof payload?.content === "string" && payload.content.length > 0
         ? payload.content
-        : "No wiki content available.";
+        : t("dreaming.diary.noWikiContent");
     const updatedAt =
       typeof payload?.updatedAt === "string" && payload.updatedAt.trim()
         ? payload.updatedAt.trim()
@@ -1935,7 +1935,7 @@ export function renderApp(state: AppViewState) {
             state.communicationsActiveSubsection = null;
           },
           onSubsectionChange: (section) => (state.communicationsActiveSubsection = section),
-          navRootLabel: "Communication",
+          navRootLabel: t("tabs.communications"),
           includeSections: [...COMMUNICATION_SECTION_KEYS],
           includeVirtualSections: true,
           webPush: {
@@ -1978,7 +1978,7 @@ export function renderApp(state: AppViewState) {
             state.automationActiveSubsection = null;
           },
           onSubsectionChange: (section) => (state.automationActiveSubsection = section),
-          navRootLabel: "Automation",
+          navRootLabel: t("tabs.automation"),
           includeSections: [...AUTOMATION_SECTION_KEYS],
         });
       case "mcp":
@@ -2008,7 +2008,7 @@ export function renderApp(state: AppViewState) {
               state.infrastructureActiveSubsection = null;
             },
             onSubsectionChange: (section) => (state.infrastructureActiveSubsection = section),
-            navRootLabel: "MCP",
+            navRootLabel: t("tabs.mcp"),
             includeSections: ["mcp"],
           }),
         });
@@ -2025,7 +2025,7 @@ export function renderApp(state: AppViewState) {
             state.infrastructureActiveSubsection = null;
           },
           onSubsectionChange: (section) => (state.infrastructureActiveSubsection = section),
-          navRootLabel: "Infrastructure",
+          navRootLabel: t("tabs.infrastructure"),
           includeSections: [...INFRASTRUCTURE_SECTION_KEYS],
         });
       case "aiAgents":
@@ -2041,7 +2041,7 @@ export function renderApp(state: AppViewState) {
             state.aiAgentsActiveSubsection = null;
           },
           onSubsectionChange: (section) => (state.aiAgentsActiveSubsection = section),
-          navRootLabel: "AI & Agents",
+          navRootLabel: t("tabs.aiAgents"),
           includeSections: [...AI_AGENTS_SECTION_KEYS],
         });
       default:
@@ -3578,6 +3578,13 @@ export function renderApp(state: AppViewState) {
                     state.chatSideResult = null;
                   },
                   onNewSession: () => void createChatSession(state, { source: "user" }),
+                  onRequestDraftPlaybook: () => void state.handleRequestDraftPlaybook(),
+                  canRequestDraftPlaybook:
+                    state.connected &&
+                    !state.chatSending &&
+                    state.chatMessages.length > 0,
+                  composerToolbarHelpOpen: state.chatComposerToolbarHelpOpen,
+                  onComposerToolbarHelpToggle: () => state.toggleChatComposerToolbarHelp(),
                   onClearHistory: runUiTask(async () => {
                     if (!state.client || !state.connected) {
                       return;

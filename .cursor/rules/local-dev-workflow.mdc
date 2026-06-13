@@ -1,0 +1,43 @@
+---
+description: Local dev startup — use watch mode; avoid manual or clean builds
+alwaysApply: true
+---
+
+# Local dev workflow
+
+Default to dev watch startup. Do not spend time on manual `pnpm build` or `pnpm clean:dist && pnpm build` unless dist is provably corrupted.
+
+## Start Gateway (default)
+
+```bash
+pnpm gateway:watch:raw
+```
+
+Alternative: `pnpm dev gateway --force`
+
+`scripts/run-node.mjs` auto-builds stale or missing `dist/` with incremental tsdown (`--no-clean`), then starts Gateway. Source changes trigger rebuild + restart.
+
+## Do not (normal dev)
+
+- Run `pnpm build` or `pnpm clean:dist` before starting Gateway
+- Run `pnpm build` while Gateway or `gateway:watch` is running
+- Run multiple build paths at once (`pnpm build` + `pnpm openclaw ...` + watch)
+
+Concurrent or overlapping builds corrupt hashed `dist/` chunks and cause `ERR_MODULE_NOT_FOUND`.
+
+## When clean build is allowed
+
+Only after confirmed dist corruption (e.g. `Cannot find module '.../dist/<hash>.js'` with Gateway already stopped):
+
+```bash
+pkill -f "run-node.mjs gateway"   # stop watch first
+pnpm clean:dist && pnpm build
+pnpm gateway:watch:raw
+```
+
+Do not suggest or run clean build for routine dev, first startup, or slow tsdown output alone.
+
+## Control UI
+
+- `gateway:watch` does not rebuild Control UI assets
+- After UI changes: `pnpm ui:build` or `pnpm ui:dev`

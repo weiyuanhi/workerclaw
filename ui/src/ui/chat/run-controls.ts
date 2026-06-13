@@ -20,6 +20,12 @@ export type ChatRunControlsProps = {
 
 export function renderChatRunControls(props: ChatRunControlsProps) {
   const showSecondary = props.showSecondary ?? true;
+  const sendHint = props.isBusy
+    ? t("chat.composer.toolbarHints.queueHint")
+    : t("chat.composer.toolbarHints.sendHint");
+  const sendLabel = props.isBusy
+    ? t("chat.composer.toolbarHints.queue")
+    : t("chat.composer.toolbarHints.send");
   return html`
     <div class="agent-chat__toolbar-right">
       ${showSecondary && !props.canAbort
@@ -60,8 +66,9 @@ export function renderChatRunControls(props: ChatRunControlsProps) {
                 props.onSend();
               }}
               ?disabled=${!props.connected || props.sending}
-              title=${t("chat.runControls.queue")}
+              title=${t("chat.composer.toolbarHints.queueHint")}
               aria-label=${t("chat.runControls.queueMessage")}
+              data-tooltip=${t("chat.composer.toolbarHints.queueHint")}
             >
               ${icons.send}
               <span class="agent-chat__control-label">${t("chat.runControls.queue")}</span>
@@ -69,8 +76,9 @@ export function renderChatRunControls(props: ChatRunControlsProps) {
             <button
               class="chat-send-btn chat-send-btn--stop"
               @click=${props.onAbort}
-              title=${t("chat.runControls.stop")}
+              title=${t("chat.composer.toolbarHints.stopHint")}
               aria-label=${t("chat.runControls.stopGenerating")}
+              data-tooltip=${t("chat.composer.toolbarHints.stopHint")}
             >
               ${icons.stop}
               <span class="agent-chat__control-label">${t("chat.runControls.stop")}</span>
@@ -86,15 +94,14 @@ export function renderChatRunControls(props: ChatRunControlsProps) {
                 props.onSend();
               }}
               ?disabled=${!props.connected || props.sending}
-              title=${props.isBusy ? t("chat.runControls.queue") : t("chat.runControls.send")}
+              title=${sendHint}
               aria-label=${props.isBusy
                 ? t("chat.runControls.queueMessage")
                 : t("chat.runControls.sendMessage")}
+              data-tooltip=${sendHint}
             >
               ${icons.send}
-              <span class="agent-chat__control-label"
-                >${props.isBusy ? t("chat.runControls.queue") : t("chat.runControls.send")}</span
-              >
+              <span class="agent-chat__control-label">${sendLabel}</span>
             </button>
           `}
     </div>

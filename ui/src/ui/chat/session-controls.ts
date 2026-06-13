@@ -950,9 +950,9 @@ function resolveChatFastModeSelectState(
       state.chatStream !== null ||
       !state.client,
     options: [
-      { value: "", label: "Default" },
-      { value: "on", label: "Fast" },
-      { value: "off", label: "Standard" },
+      { value: "", label: t("chat.selectors.defaultOption") },
+      { value: "on", label: t("chat.selectors.fastMode") },
+      { value: "off", label: t("chat.selectors.fastModeStandard") },
     ],
     supported,
   };
@@ -1100,7 +1100,9 @@ function formatCombinedPickerThinkingLabel(label: string): string {
 }
 
 function formatCombinedPickerThinkingOptionLabel(option: ChatInlineSelectOption): string {
-  return option.value === "" ? "Default" : formatCombinedPickerThinkingLabel(option.label);
+  return option.value === ""
+    ? t("chat.selectors.defaultOption")
+    : formatCombinedPickerThinkingLabel(option.label);
 }
 
 function renderChatModelReasoningSelect(params: {
@@ -1163,7 +1165,7 @@ function renderChatModelReasoningSelect(params: {
         class="chat-controls__inline-select-menu chat-controls__inline-select-menu--combined"
         aria-label=${t("chat.selectors.model")}
       >
-        <div class="chat-controls__inline-select-section-label">Model</div>
+        <div class="chat-controls__inline-select-section-label">${t("chat.selectors.modelSection")}</div>
         <div class="chat-controls__combined-model-list">
           ${repeat(
             modelOptions,
@@ -1212,7 +1214,7 @@ function renderChatModelReasoningSelect(params: {
           role="listbox"
           aria-label=${t("chat.selectors.thinkingLevel")}
         >
-          <div class="chat-controls__inline-select-section-label">Reasoning</div>
+          <div class="chat-controls__inline-select-section-label">${t("chat.selectors.reasoningSection")}</div>
           <div class="chat-controls__reasoning-options">
             ${repeat(
               thinkingOptions,
@@ -1254,7 +1256,7 @@ function renderChatModelReasoningSelect(params: {
           </div>
           ${fastMode.supported
             ? html`
-                <div class="chat-controls__inline-select-section-label">Speed</div>
+                <div class="chat-controls__inline-select-section-label">${t("chat.selectors.speedSection")}</div>
                 <div class="chat-controls__reasoning-options" role="listbox">
                   ${repeat(
                     fastMode.options,
@@ -1630,7 +1632,7 @@ export function resolveSessionOptionGroups(
           `agent:${normalizeLowercaseStringOrEmpty(parsed.agentId)}`,
           resolveAgentGroupLabel(state, parsed.agentId),
         )
-      : ensureGroup("other", "Other Sessions");
+      : ensureGroup("other", t("chat.selectors.otherSessions"));
     const scopeLabel = normalizeOptionalString(parsed?.rest) ?? key;
     group.options.push({
       key,

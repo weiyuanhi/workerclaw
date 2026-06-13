@@ -21,7 +21,7 @@ import {
   resolveToolSections,
 } from "./agents-utils.ts";
 import type { SkillGroup } from "./skills-grouping.ts";
-import { groupSkills } from "./skills-grouping.ts";
+import { groupSkills, resolveSkillGroupLabel } from "./skills-grouping.ts";
 import {
   computeSkillMissing,
   computeSkillReasons,
@@ -44,12 +44,12 @@ function buildCatalogBadgeLabels(section: AgentToolSection, tool: AgentToolEntry
   const pluginId = tool.pluginId ?? section.pluginId;
   const badges: string[] = [];
   if (source === "plugin" && pluginId) {
-    badges.push(`Plugin: ${pluginId}`);
+    badges.push(t("agentTools.pluginSource", { id: pluginId }));
   } else if (source === "core") {
-    badges.push("Built-In");
+    badges.push(t("agentTools.builtIn"));
   }
   if (tool.optional) {
-    badges.push("Optional");
+    badges.push(t("agentTools.optional"));
   }
   return badges;
 }
@@ -61,7 +61,7 @@ function buildRowStatusBadges(params: {
 }) {
   const badges = buildCatalogBadgeLabels(params.section, params.tool);
   if (params.activeEntry) {
-    badges.unshift("Live Now");
+    badges.unshift(t("agentTools.liveNow"));
   }
   return badges;
 }
@@ -72,24 +72,24 @@ function formatToolPolicyState(params: {
   denied: boolean;
 }) {
   if (params.denied) {
-    return "Disabled by agent override.";
+    return t("agentTools.policy.disabledByOverride");
   }
   if (params.allowed && params.baseAllowed) {
-    return "Enabled by the current profile.";
+    return t("agentTools.policy.enabledByProfile");
   }
   if (params.allowed) {
-    return "Enabled by agent override.";
+    return t("agentTools.policy.enabledByOverride");
   }
-  return "Not included in the current profile.";
+  return t("agentTools.policy.notInProfile");
 }
 
 function formatToolSourceLabel(section: AgentToolSection, tool: AgentToolEntry) {
   const source = tool.source ?? section.source;
   const pluginId = tool.pluginId ?? section.pluginId;
   if (source === "plugin" && pluginId) {
-    return `Plugin: ${pluginId}`;
+    return t("agentTools.pluginSource", { id: pluginId });
   }
-  return "Built-In";
+  return t("agentTools.builtIn");
 }
 
 function formatToolAccessSummary(params: {
@@ -98,15 +98,15 @@ function formatToolAccessSummary(params: {
   denied: boolean;
 }) {
   if (params.denied) {
-    return "Override Off";
+    return t("agentTools.access.overrideOff");
   }
   if (params.allowed && params.baseAllowed) {
-    return "Enabled";
+    return t("agentTools.access.enabled");
   }
   if (params.allowed) {
-    return "Override On";
+    return t("agentTools.access.overrideOn");
   }
-  return "Profile Off";
+  return t("agentTools.access.profileOff");
 }
 
 function formatToolRuntimeSummary(params: {
@@ -114,12 +114,12 @@ function formatToolRuntimeSummary(params: {
   runtimeSessionMatchesSelectedAgent: boolean;
 }) {
   if (params.activeEntry) {
-    return "Live Now";
+    return t("agentTools.liveNow");
   }
   if (params.runtimeSessionMatchesSelectedAgent) {
-    return "Not Live";
+    return t("agentTools.notLive");
   }
-  return "Other Agent";
+  return t("agentTools.otherAgent");
 }
 
 function toToolAnchorId(toolId: string) {
@@ -127,8 +127,21 @@ function toToolAnchorId(toolId: string) {
   return `agent-tool-${safe}`;
 }
 
-function formatCountLabel(count: number, singular: string, plural = `${singular}s`) {
-  return `${count} ${count === 1 ? singular : plural}`;
+function formatCountLabel(count: number, kind: "tool" | "enabledTool" | "liveTool") {
+  const countLabel = String(count);
+  if (kind === "tool") {
+    return count === 1
+      ? t("agentTools.counts.tool", { count: countLabel })
+      : t("agentTools.counts.tools", { count: countLabel });
+  }
+  if (kind === "enabledTool") {
+    return count === 1
+      ? t("agentTools.counts.enabledTool", { count: countLabel })
+      : t("agentTools.counts.enabledTools", { count: countLabel });
+  }
+  return count === 1
+    ? t("agentTools.counts.liveTool", { count: countLabel })
+    : t("agentTools.counts.liveTools", { count: countLabel });
 }
 
 function flattenEffectiveTools(groups: ToolsEffectiveResult["groups"] | null | undefined) {
@@ -213,7 +226,7 @@ function renderEffectiveToolBadge(tool: {
       : t("agentTools.channel");
   }
   if (tool.source === "mcp") {
-    return "MCP";
+    return t("agentTools.mcp");
   }
   return t("agentTools.builtIn");
 }
@@ -244,10 +257,10 @@ export function renderAgentTools(params: {
   const profileOptions = resolveToolProfileOptions(params.toolsCatalogResult);
   const toolSections = resolveToolSections(params.toolsCatalogResult);
   const profileSource = agentTools.profile
-    ? "agent override"
+    ? t("agents.toolsPanel.profileSourceAgentOverride")
     : globalTools.profile
-      ? "global default"
-      : "default";
+      ? t("agents.toolsPanel.profileSourceGlobalDefault")
+      : t("agents.toolsPanel.profileSourceDefault");
   const hasAgentAllow = Array.isArray(agentTools.allow) && agentTools.allow.length > 0;
   const hasGlobalAllow = Array.isArray(globalTools.allow) && globalTools.allow.length > 0;
   const editable =
@@ -362,18 +375,19 @@ export function renderAgentTools(params: {
     <section class="card">
       <div class="agent-tools-header">
         <div class="agent-tools-header__intro">
-          <div class="card-title">Tool Access</div>
+          <div class="card-title">${t("agents.toolsPanel.title")}</div>
           <div class="card-sub">
-            Profile + per-tool overrides for this agent.
-            <span class="mono">${enabledCount}/${toolIds.length}</span> enabled.
+            ${t("agents.toolsPanel.subtitle")}
+            <span class="mono">${enabledCount}/${toolIds.length}</span>
+            ${t("agents.toolsPanel.enabledSuffix")}
           </div>
         </div>
         <div class="agent-tools-header__actions">
           <button class="btn btn--sm" ?disabled=${!editable} @click=${() => updateAll(true)}>
-            Enable All
+            ${t("agents.toolsPanel.enableAll")}
           </button>
           <button class="btn btn--sm" ?disabled=${!editable} @click=${() => updateAll(false)}>
-            Disable All
+            ${t("agents.toolsPanel.disableAll")}
           </button>
           <button
             class="btn btn--sm"
@@ -387,7 +401,7 @@ export function renderAgentTools(params: {
             ?disabled=${params.configSaving || !params.configDirty}
             @click=${params.onConfigSave}
           >
-            ${params.configSaving ? "Saving…" : "Save"}
+            ${params.configSaving ? t("common.saving") : t("common.save")}
           </button>
         </div>
       </div>
@@ -395,35 +409,35 @@ export function renderAgentTools(params: {
       ${!params.configForm
         ? html`
             <div class="callout info" style="margin-top: 12px">
-              Load the gateway config to adjust tool profiles.
+              ${t("agents.toolsPanel.loadConfigHint")}
             </div>
           `
         : nothing}
       ${hasAgentAllow
         ? html`
             <div class="callout info" style="margin-top: 12px">
-              This agent is using an explicit allowlist in config. Tool overrides are managed in the
-              Config tab.
+              ${t("agents.toolsPanel.allowlistHint")}
             </div>
           `
         : nothing}
       ${hasGlobalAllow
         ? html`
             <div class="callout info" style="margin-top: 12px">
-              Global tools.allow is set. Agent overrides cannot enable tools that are globally
-              blocked.
+              ${t("agents.toolsPanel.globalAllowHint")}
             </div>
           `
         : nothing}
       ${params.toolsCatalogLoading && !params.toolsCatalogResult && !params.toolsCatalogError
         ? html`
-            <div class="callout info" style="margin-top: 12px">Loading runtime tool catalog…</div>
+            <div class="callout info" style="margin-top: 12px">
+              ${t("agents.toolsPanel.catalogLoading")}
+            </div>
           `
         : nothing}
       ${params.toolsCatalogError
         ? html`
             <div class="callout info" style="margin-top: 12px">
-              Could not load runtime tool catalog. Showing built-in fallback list instead.
+              ${t("agents.toolsPanel.catalogError")}
             </div>
           `
         : nothing}
@@ -431,16 +445,16 @@ export function renderAgentTools(params: {
       <div class="agent-tools-overview">
         <div class="agent-tools-overview__primary">
           <div class="agent-tools-pane">
-            <div class="label">Available Right Now</div>
+            <div class="label">${t("agents.toolsPanel.availableNowTitle")}</div>
             <div class="card-sub">
-              What this agent can use in the current chat session.
-              <span class="mono">${params.runtimeSessionKey || "no session"}</span>
+              ${t("agents.toolsPanel.availableNowSubtitle")}
+              <span class="mono">${params.runtimeSessionKey || t("agents.toolsPanel.noSession")}</span>
             </div>
             ${renderEffectiveToolNotices(params.toolsEffectiveResult)}
             ${!params.runtimeSessionMatchesSelectedAgent
               ? html`
                   <div class="callout info" style="margin-top: 12px">
-                    Switch chat to this agent to view its live runtime tools.
+                    ${t("agents.toolsPanel.switchAgentRuntime")}
                   </div>
                 `
               : params.toolsEffectiveLoading &&
@@ -448,19 +462,19 @@ export function renderAgentTools(params: {
                   !params.toolsEffectiveError
                 ? html`
                     <div class="callout info" style="margin-top: 12px">
-                      Loading available tools…
+                      ${t("agents.toolsPanel.runtimeLoading")}
                     </div>
                   `
                 : params.toolsEffectiveError
                   ? html`
                       <div class="callout info" style="margin-top: 12px">
-                        Could not load available tools for this session.
+                        ${t("agents.toolsPanel.runtimeLoadError")}
                       </div>
                     `
                   : (params.toolsEffectiveResult?.groups?.length ?? 0) === 0
                     ? html`
                         <div class="callout info" style="margin-top: 12px">
-                          No tools are available for this session right now.
+                          ${t("agents.toolsPanel.runtimeEmpty")}
                         </div>
                       `
                     : html`
@@ -484,9 +498,13 @@ export function renderAgentTools(params: {
                             ? html`
                                 <span
                                   class="agent-tools-runtime-chip agent-tools-runtime-chip--more"
-                                  title=${`${hiddenEffectiveToolCount} more live tools are available in the groups below.`}
+                                  title=${t("agents.toolsPanel.moreLiveToolsTitle", {
+                                    count: String(hiddenEffectiveToolCount),
+                                  })}
                                 >
-                                  +${hiddenEffectiveToolCount} more live tools
+                                  ${t("agentTools.counts.moreLiveTools", {
+                                    count: String(hiddenEffectiveToolCount),
+                                  })}
                                 </span>
                               `
                             : nothing}
@@ -495,7 +513,7 @@ export function renderAgentTools(params: {
           </div>
 
           <div class="agent-tools-pane">
-            <div class="label">Quick Presets</div>
+            <div class="label">${t("agents.toolsPanel.quickPresets")}</div>
             <div class="agent-tools-buttons">
               ${profileOptions.map(
                 (option) => html`
@@ -513,7 +531,7 @@ export function renderAgentTools(params: {
                 ?disabled=${!editable}
                 @click=${() => params.onProfileChange(params.agentId, null, false)}
               >
-                Inherit
+                ${t("agents.toolsPanel.inherit")}
               </button>
             </div>
           </div>
@@ -521,25 +539,29 @@ export function renderAgentTools(params: {
 
         <div class="agent-tools-facts">
           <div class="agent-tools-fact">
-            <div class="label">Profile</div>
+            <div class="label">${t("agents.toolsPanel.factProfile")}</div>
             <div class="mono">${profile}</div>
           </div>
           <div class="agent-tools-fact">
-            <div class="label">Source</div>
+            <div class="label">${t("agents.toolsPanel.factSource")}</div>
             <div>${profileSource}</div>
           </div>
           <div class="agent-tools-fact">
-            <div class="label">Enabled</div>
+            <div class="label">${t("agents.toolsPanel.factEnabled")}</div>
             <div class="mono">${enabledCount}/${toolIds.length}</div>
           </div>
           <div class="agent-tools-fact">
-            <div class="label">Live</div>
+            <div class="label">${t("agents.toolsPanel.factLive")}</div>
             <div class="mono">${liveToolCount}</div>
           </div>
           <div class="agent-tools-fact">
-            <div class="label">Status</div>
+            <div class="label">${t("agents.toolsPanel.factStatus")}</div>
             <div class="mono">
-              ${params.configSaving ? "saving…" : params.configDirty ? "unsaved" : "saved"}
+              ${params.configSaving
+                ? t("agents.toolsPanel.statusSaving")
+                : params.configDirty
+                  ? t("agents.toolsPanel.statusUnsaved")
+                  : t("agents.toolsPanel.statusSaved")}
             </div>
           </div>
         </div>
@@ -563,10 +585,12 @@ export function renderAgentTools(params: {
                   <span class="agent-tools-group__title">
                     ${section.label}
                     ${section.source === "plugin" && section.pluginId
-                      ? html`<span class="agent-pill">Plugin: ${section.pluginId}</span>`
+                      ? html`<span class="agent-pill"
+                          >${t("agentTools.pluginSource", { id: section.pluginId })}</span
+                        >`
                       : nothing}
                   </span>
-                  <span class="agent-tools-group__preview" aria-label="Tool preview">
+                  <span class="agent-tools-group__preview" aria-label=${t("agentTools.toolPreview")}>
                     ${previewTools.map(
                       (tool) =>
                         html`<span class="mono" translate="no" title=${tool.label}
@@ -574,15 +598,19 @@ export function renderAgentTools(params: {
                         >`,
                     )}
                     ${remainingPreviewCount > 0
-                      ? html`<span>+${remainingPreviewCount} more</span>`
+                      ? html`<span
+                          >${t("agentTools.counts.more", {
+                            count: String(remainingPreviewCount),
+                          })}</span
+                        >`
                       : nothing}
                   </span>
                 </span>
                 <span class="agent-tools-group__counts">
-                  <span>${formatCountLabel(section.tools.length, "Tool")}</span>
-                  <span>${formatCountLabel(enabledSectionCount, "Enabled Tool")}</span>
+                  <span>${formatCountLabel(section.tools.length, "tool")}</span>
+                  <span>${formatCountLabel(enabledSectionCount, "enabledTool")}</span>
                   ${activeSectionCount > 0
-                    ? html`<span>${formatCountLabel(activeSectionCount, "Live Tool")}</span>`
+                    ? html`<span>${formatCountLabel(activeSectionCount, "liveTool")}</span>`
                     : nothing}
                 </span>
               </summary>
@@ -613,11 +641,11 @@ export function renderAgentTools(params: {
                         </div>
                         <dl class="agent-tool-summary__facts">
                           <div class="agent-tool-summary__fact">
-                            <dt class="label">Access</dt>
+                            <dt class="label">${t("agentTools.labels.access")}</dt>
                             <dd>${accessSummary}</dd>
                           </div>
                           <div class="agent-tool-summary__fact">
-                            <dt class="label">Session</dt>
+                            <dt class="label">${t("agentTools.labels.session")}</dt>
                             <dd>${runtimeSummary}</dd>
                           </div>
                         </dl>
@@ -633,7 +661,9 @@ export function renderAgentTools(params: {
                             type="checkbox"
                             .checked=${resolved.allowed}
                             ?disabled=${!editable}
-                            aria-label=${`${resolved.allowed ? "Disable" : "Enable"} ${tool.label}`}
+                            aria-label=${resolved.allowed
+                              ? t("agentTools.toggleDisable", { tool: tool.label })
+                              : t("agentTools.toggleEnable", { tool: tool.label })}
                             @change=${(e: Event) =>
                               updateTool(tool.id, (e.target as HTMLInputElement).checked)}
                           />
@@ -643,17 +673,17 @@ export function renderAgentTools(params: {
                       <div class="agent-tool-details">
                         <div class="agent-tool-details-strip">
                           <div class="agent-tool-detail agent-tool-detail--inline">
-                            <div class="label">Access</div>
+                            <div class="label">${t("agentTools.labels.access")}</div>
                             <div>${formatToolPolicyState(resolved)}</div>
                           </div>
                           <div class="agent-tool-detail agent-tool-detail--inline">
-                            <div class="label">Source</div>
+                            <div class="label">${t("agentTools.labels.source")}</div>
                             <div>${formatToolSourceLabel(section, tool)}</div>
                           </div>
                           ${defaultProfiles.length > 0
                             ? html`
                                 <div class="agent-tool-detail agent-tool-detail--inline">
-                                  <div class="label">Default Presets</div>
+                                  <div class="label">${t("agentTools.labels.defaultPresets")}</div>
                                   <div class="agent-tool-badges">
                                     ${defaultProfiles.map(
                                       (profileId) =>
@@ -664,16 +694,20 @@ export function renderAgentTools(params: {
                               `
                             : nothing}
                           <div class="agent-tool-detail agent-tool-detail--inline">
-                            <div class="label">Current Session</div>
+                            <div class="label">${t("agentTools.labels.currentSession")}</div>
                             <div>
                               ${activeEntry
-                                ? `Available now via ${renderEffectiveToolBadge(activeEntry)}.`
+                                ? t("agentTools.session.availableNow", {
+                                    source: renderEffectiveToolBadge(activeEntry),
+                                  })
                                 : params.runtimeSessionMatchesSelectedAgent
-                                  ? "Not available in this chat session right now."
-                                  : "Switch chat to this agent to inspect live availability."}
+                                  ? t("agentTools.session.notAvailable")
+                                  : t("agentTools.session.switchAgent")}
                             </div>
                           </div>
-                          <a class="agent-tool-jump" href="#${anchorId}"> Link to This Tool </a>
+                          <a class="agent-tool-jump" href="#${anchorId}">
+                            ${t("agentTools.linkToTool")}
+                          </a>
                         </div>
                       </div>
                     </details>
@@ -732,9 +766,9 @@ export function renderAgentSkills(params: {
     <section class="card">
       <div class="row" style="justify-content: space-between; flex-wrap: wrap;">
         <div style="min-width: 0;">
-          <div class="card-title">Skills</div>
+          <div class="card-title">${t("agents.tabs.skills")}</div>
           <div class="card-sub">
-            Per-agent skill allowlist and workspace skills.
+            ${t("agents.skillsPanel.subtitle")}
             ${totalCount > 0
               ? html`<span class="mono">${enabledCount}/${totalCount}</span>`
               : nothing}
@@ -750,22 +784,22 @@ export function renderAgentSkills(params: {
               ?disabled=${!editable}
               @click=${() => params.onClear(params.agentId)}
             >
-              Enable All
+              ${t("agents.skillsPanel.enableAll")}
             </button>
             <button
               class="btn btn--sm"
               ?disabled=${!editable}
               @click=${() => params.onDisableAll(params.agentId)}
             >
-              Disable All
+              ${t("agents.skillsPanel.disableAll")}
             </button>
             <button
               class="btn btn--sm"
               ?disabled=${!editable || !usingAllowlist}
               @click=${() => params.onClear(params.agentId)}
-              title="Remove per-agent allowlist and use all skills"
+              title=${t("agents.skillsPanel.resetTitle")}
             >
-              Reset
+              ${t("common.reset")}
             </button>
           </div>
           <button
@@ -783,7 +817,7 @@ export function renderAgentSkills(params: {
             ?disabled=${params.configSaving || !params.configDirty}
             @click=${params.onConfigSave}
           >
-            ${params.configSaving ? "Saving…" : "Save"}
+            ${params.configSaving ? t("common.saving") : t("common.save")}
           </button>
         </div>
       </div>
@@ -791,25 +825,25 @@ export function renderAgentSkills(params: {
       ${!params.configForm
         ? html`
             <div class="callout info" style="margin-top: 12px">
-              Load the gateway config to set per-agent skills.
+              ${t("agents.skillsPanel.loadConfigHint")}
             </div>
           `
         : nothing}
       ${usingAllowlist
         ? html`
             <div class="callout info" style="margin-top: 12px">
-              This agent uses a custom skill allowlist.
+              ${t("agents.skillsPanel.allowlistActive")}
             </div>
           `
         : html`
             <div class="callout info" style="margin-top: 12px">
-              All skills are enabled. Disabling any skill will create a per-agent allowlist.
+              ${t("agents.skillsPanel.allEnabled")}
             </div>
           `}
       ${!reportReady && !params.loading
         ? html`
             <div class="callout info" style="margin-top: 12px">
-              Load skills for this agent to view workspace-specific entries.
+              ${t("agents.skillsPanel.loadSkillsHint")}
             </div>
           `
         : nothing}
@@ -819,20 +853,22 @@ export function renderAgentSkills(params: {
 
       <div class="filters" style="margin-top: 14px;">
         <label class="field" style="flex: 1;">
-          <span>Filter</span>
+          <span>${t("agents.skillsPanel.filterLabel")}</span>
           <input
             .value=${params.filter}
             @input=${(e: Event) => params.onFilterChange((e.target as HTMLInputElement).value)}
-            placeholder="Search skills"
+            placeholder=${t("agents.skillsPanel.searchPlaceholder")}
             autocomplete="off"
             name="agent-skills-filter"
           />
         </label>
-        <div class="muted">${filtered.length} shown</div>
+        <div class="muted">
+          ${t("agents.skillsPanel.shownCount", { count: String(filtered.length) })}
+        </div>
       </div>
 
       ${filtered.length === 0
-        ? html` <div class="muted" style="margin-top: 16px">No skills found.</div> `
+        ? html` <div class="muted" style="margin-top: 16px">${t("agents.skillsPanel.empty")}</div> `
         : html`
             <div class="agent-skills-groups" style="margin-top: 16px;">
               ${groups.map((group) =>
@@ -864,7 +900,7 @@ function renderAgentSkillGroup(
   return html`
     <details class="agent-skills-group" ?open=${!collapsedByDefault}>
       <summary class="agent-skills-header">
-        <span>${group.label}</span>
+        <span>${resolveSkillGroupLabel(group)}</span>
         <span class="muted">${group.skills.length}</span>
       </summary>
       <div class="list skills-grid">
@@ -902,10 +938,14 @@ function renderAgentSkillRow(
         <div class="list-sub">${skill.description}</div>
         ${renderSkillStatusChips({ skill })}
         ${missing.length > 0
-          ? html`<div class="muted" style="margin-top: 6px;">Missing: ${missing.join(", ")}</div>`
+          ? html`<div class="muted" style="margin-top: 6px;">
+              ${t("agents.skillsPanel.missing", { items: missing.join(", ") })}
+            </div>`
           : nothing}
         ${reasons.length > 0
-          ? html`<div class="muted" style="margin-top: 6px;">Reason: ${reasons.join(", ")}</div>`
+          ? html`<div class="muted" style="margin-top: 6px;">
+              ${t("agents.skillsPanel.reason", { items: reasons.join(", ") })}
+            </div>`
           : nothing}
       </div>
       <div class="list-meta">

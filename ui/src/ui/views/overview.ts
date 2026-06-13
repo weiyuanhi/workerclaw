@@ -272,7 +272,7 @@ export function renderOverview(props: OverviewProps) {
                   token: v.trim() === props.settings.gatewayUrl.trim() ? props.settings.token : "",
                 });
               }}
-              placeholder="ws://100.x.y.z:18789"
+              placeholder=${t("overview.access.wsUrlPlaceholder")}
             />
           </label>
           ${isTrustedProxy
@@ -290,7 +290,7 @@ export function renderOverview(props: OverviewProps) {
                         const v = (e.target as HTMLInputElement).value;
                         props.onSettingsChange({ ...props.settings, token: v });
                       }}
-                      placeholder="OPENCLAW_GATEWAY_TOKEN"
+                      placeholder=${t("overview.access.tokenPlaceholder")}
                     />
                     <button
                       type="button"

@@ -112,6 +112,12 @@ const subCliCommandCatalog = defineCommandDescriptorCatalog([
     hasSubcommands: true,
   },
   {
+    name: "channels",
+    description: "Manage chat channel accounts (Telegram, Discord, WhatsApp, Weixin, etc.)",
+    hasSubcommands: true,
+    parentDefaultHelp: true,
+  },
+  {
     name: "plugins",
     description: "Install, enable, disable, and inspect plugins",
     hasSubcommands: true,

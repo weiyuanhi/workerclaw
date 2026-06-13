@@ -195,12 +195,9 @@ function canSwitchToNewChatSession(state: AppViewState): boolean {
   );
 }
 
-const NEW_CHAT_ACTIVE_RUN_MESSAGE =
-  "Start a new session after the active run or queued messages finish.";
-const NEW_CHAT_SESSIONS_LOADING_MESSAGE =
-  "Session list is still refreshing. Try New Chat again in a moment.";
-const NEW_CHAT_CREATE_FAILED_MESSAGE =
-  "New Chat could not create a new session. Try again in a moment.";
+const NEW_CHAT_ACTIVE_RUN_MESSAGE = () => t("chat.runControls.activeRunBlocked");
+const NEW_CHAT_SESSIONS_LOADING_MESSAGE = () => t("chat.runControls.sessionsLoading");
+const NEW_CHAT_CREATE_FAILED_MESSAGE = () => t("chat.runControls.createFailed");
 
 export function renderTab(state: AppViewState, tab: Tab, opts?: { collapsed?: boolean }) {
   const href = pathForTab(tab, state.basePath);
@@ -396,10 +393,11 @@ export function renderChatControls(state: AppViewState) {
       <button
         class="chat-settings-chip ${settingsOpen ? "chat-settings-chip--open" : ""}"
         type="button"
-        title=${settingsTitle}
+        title=${t("chat.composer.toolbarHints.settingsHint")}
         aria-label=${settingsTitle}
         aria-expanded=${settingsOpen}
         aria-controls="chat-composer-settings-popover"
+        data-tooltip=${t("chat.composer.toolbarHints.settingsHint")}
         @click=${(e: Event) => {
           e.stopPropagation();
           (e.currentTarget as HTMLElement)
@@ -718,12 +716,12 @@ export async function createChatSession(
     return false;
   }
   if (!canSwitchToNewChatSession(state)) {
-    state.lastError = NEW_CHAT_ACTIVE_RUN_MESSAGE;
+    state.lastError = NEW_CHAT_ACTIVE_RUN_MESSAGE();
     state.chatError = state.lastError;
     return false;
   }
   if (state.sessionsLoading) {
-    state.lastError = NEW_CHAT_SESSIONS_LOADING_MESSAGE;
+    state.lastError = NEW_CHAT_SESSIONS_LOADING_MESSAGE();
     state.chatError = state.lastError;
     return false;
   }
@@ -759,8 +757,8 @@ export async function createChatSession(
       state.lastError =
         state.sessionsError ??
         (state.sessionsLoading
-          ? NEW_CHAT_SESSIONS_LOADING_MESSAGE
-          : NEW_CHAT_CREATE_FAILED_MESSAGE);
+          ? NEW_CHAT_SESSIONS_LOADING_MESSAGE()
+          : NEW_CHAT_CREATE_FAILED_MESSAGE());
       state.chatError = state.lastError;
     }
     return false;

@@ -1,5 +1,6 @@
 // Control UI view renders config form.render screen content.
 import { html, nothing } from "lit";
+import { t } from "../../i18n/index.ts";
 import { icons } from "../icons.ts";
 import { normalizeLowercaseStringOrEmpty } from "../string-coerce.ts";
 import type { ConfigUiHints } from "../types.ts";
@@ -277,6 +278,21 @@ const sectionIcons = {
 };
 
 // Section metadata
+export function resolveConfigSectionMeta(
+  key: string,
+  schema?: { title?: string; description?: string },
+): { label: string; description: string } {
+  const labelKey = `configPage.sectionsMeta.${key}.label`;
+  const descriptionKey = `configPage.sectionsMeta.${key}.description`;
+  const label = t(labelKey);
+  const description = t(descriptionKey);
+  return {
+    label: label !== labelKey ? label : (schema?.title ?? humanize(key)),
+    description: description !== descriptionKey ? description : (schema?.description ?? ""),
+  };
+}
+
+/** @deprecated Use resolveConfigSectionMeta at render time for locale-aware labels. */
 export const SECTION_META: Record<string, { label: string; description: string }> = {
   env: {
     label: "Environment Variables",
@@ -341,7 +357,7 @@ function matchesSearch(params: {
   }
   const criteria = parseConfigSearchQuery(params.query);
   const q = criteria.text;
-  const meta = SECTION_META[params.key];
+  const meta = resolveConfigSectionMeta(params.key);
   const sectionMetaMatches =
     q &&
     (normalizeLowercaseStringOrEmpty(params.key).includes(q) ||
@@ -363,12 +379,12 @@ function matchesSearch(params: {
 
 export function renderConfigForm(props: ConfigFormProps) {
   if (!props.schema) {
-    return html` <div class="muted">Schema unavailable.</div> `;
+    return html` <div class="muted">${t("configPage.form.schemaUnavailable")}</div> `;
   }
   const schema = props.schema;
   const value = props.value ?? {};
   if (schemaType(schema) !== "object" || !schema.properties) {
-    return html` <div class="callout danger">Unsupported schema. Use Raw.</div> `;
+    return html` <div class="callout danger">${t("configPage.form.unsupportedSchema")}</div> `;
   }
   const unsupported = new Set(props.unsupportedPaths ?? []);
   const properties = schema.properties;
@@ -428,7 +444,9 @@ export function renderConfigForm(props: ConfigFormProps) {
       <div class="config-empty">
         <div class="config-empty__icon">${icons.search}</div>
         <div class="config-empty__text">
-          ${searchQuery ? `No settings match "${searchQuery}"` : "No settings in this section"}
+          ${searchQuery
+            ? t("configPage.toolbar.noSettingsMatch", { query: searchQuery })
+            : t("configPage.toolbar.noSettingsInSection")}
         </div>
       </div>
     `;
@@ -503,10 +521,7 @@ export function renderConfigForm(props: ConfigFormProps) {
             });
           })()
         : filteredEntries.map(([key, node]) => {
-            const meta = SECTION_META[key] ?? {
-              label: key.charAt(0).toUpperCase() + key.slice(1),
-              description: node.description ?? "",
-            };
+            const meta = resolveConfigSectionMeta(key, node);
 
             return renderSectionCard({
               id: `config-section-${key}`,

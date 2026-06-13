@@ -1,5 +1,6 @@
 // Control UI view renders config form screen content.
 import { html, nothing, type TemplateResult } from "lit";
+import { t } from "../../i18n/index.ts";
 import { formatUnknownText } from "../format.ts";
 import { icons as sharedIcons } from "../icons.ts";
 import {
@@ -197,14 +198,14 @@ function renderSensitiveToggleButton(params: {
       style="width:28px;height:28px;padding:0;"
       title=${state.canReveal
         ? state.isRevealed
-          ? "Hide value"
-          : "Reveal value"
-        : "Disable stream mode to reveal value"}
+          ? t("configPage.form.hideValue")
+          : t("configPage.form.revealValue")
+        : t("configPage.form.disableStreamToReveal")}
       aria-label=${state.canReveal
         ? state.isRevealed
-          ? "Hide value"
-          : "Reveal value"
-        : "Disable stream mode to reveal value"}
+          ? t("configPage.form.hideValue")
+          : t("configPage.form.revealValue")
+        : t("configPage.form.disableStreamToReveal")}
       aria-pressed=${state.isRevealed}
       ?disabled=${params.disabled || !state.canReveal}
       @click=${() => params.onToggleSensitivePath?.(params.path)}
@@ -454,7 +455,7 @@ export function renderNode(params: {
   if (unsupported.has(key)) {
     return html`<div class="cfg-field cfg-field--error">
       <div class="cfg-field__label">${label}</div>
-      <div class="cfg-field__error">Unsupported schema node. Use Raw mode.</div>
+      <div class="cfg-field__error">${t("configPage.form.unsupportedSchemaNode")}</div>
     </div>`;
   }
   if (
@@ -645,7 +646,7 @@ export function renderNode(params: {
   return html`
     <div class="cfg-field cfg-field--error">
       <div class="cfg-field__label">${label}</div>
-      <div class="cfg-field__error">Unsupported type: ${type}. Use Raw mode.</div>
+      <div class="cfg-field__error">${t("configPage.form.unsupportedTypeUseRaw", { type })}</div>
     </div>
   `;
 }
@@ -684,11 +685,13 @@ function renderTextInput(params: {
   const placeholder = effectiveRedacted
     ? isStructuredSecretRef
       ? rawAvailable
-        ? "Structured value (SecretRef) - use Raw mode to edit"
-        : "Structured value (SecretRef) - edit the config file directly"
+        ? t("configPage.form.secretRefRaw")
+        : t("configPage.form.secretRefDirect")
       : REDACTED_PLACEHOLDER
     : (hint?.placeholder ??
-      (schema.default !== undefined ? `Default: ${formatUnknownText(schema.default)}` : ""));
+      (schema.default !== undefined
+        ? t("configPage.form.defaultValue", { value: formatUnknownText(schema.default) })
+        : ""));
   const displayValue = effectiveRedacted
     ? ""
     : isStructuredValue
@@ -754,7 +757,7 @@ function renderTextInput(params: {
               <button
                 type="button"
                 class="cfg-input__reset"
-                title="Reset to default"
+                title=${t("configPage.form.resetToDefault")}
                 ?disabled=${disabled || effectiveRedacted}
                 @click=${() => onPatch(path, schema.default)}
               >
@@ -853,7 +856,7 @@ function renderSelect(params: {
           onPatch(path, val === unset ? undefined : options[Number(val)]);
         }}
       >
-        <option value=${unset} ?selected=${currentIndex < 0}>Select...</option>
+        <option value=${unset} ?selected=${currentIndex < 0}>${t("configPage.form.selectPlaceholder")}</option>
         ${options.map(
           (opt, idx) =>
             html` <option value=${String(idx)} ?selected=${idx === currentIndex}>
@@ -897,7 +900,7 @@ function renderJsonTextarea(params: {
       <div class="cfg-input-wrap">
         <textarea
           class="cfg-textarea${sensitiveState.isRedacted ? " cfg-textarea--redacted" : ""}"
-          placeholder=${sensitiveState.isRedacted ? REDACTED_PLACEHOLDER : "JSON value"}
+          placeholder=${sensitiveState.isRedacted ? REDACTED_PLACEHOLDER : t("configPage.form.jsonValue")}
           rows="3"
           .value=${displayValue}
           ?disabled=${disabled}
@@ -1097,7 +1100,7 @@ function renderArray(params: {
     return html`
       <div class="cfg-field cfg-field--error">
         <div class="cfg-field__label">${label}</div>
-        <div class="cfg-field__error">Unsupported array schema. Use Raw mode.</div>
+        <div class="cfg-field__error">${t("configPage.form.unsupportedArraySchema")}</div>
       </div>
     `;
   }
@@ -1127,7 +1130,7 @@ function renderArray(params: {
       </div>
       ${help ? html`<div class="cfg-array__help">${help}</div>` : nothing}
       ${arr.length === 0
-        ? html` <div class="cfg-array__empty">No items yet. Click "Add" to create one.</div> `
+        ? html` <div class="cfg-array__empty">${t("configPage.form.noItemsYet")}</div> `
         : html`
             <div class="cfg-array__items">
               ${arr.map(
@@ -1138,7 +1141,7 @@ function renderArray(params: {
                       <button
                         type="button"
                         class="cfg-array__item-remove"
-                        title="Remove item"
+                        title=${t("configPage.form.removeItem")}
                         ?disabled=${disabled}
                         @click=${() => {
                           const next = [...arr];
@@ -1223,7 +1226,7 @@ function renderMapField(params: {
   return html`
     <div class="cfg-map">
       <div class="cfg-map__header">
-        <span class="cfg-map__label">Custom entries</span>
+        <span class="cfg-map__label">${t("configPage.form.customEntries")}</span>
         <button
           type="button"
           class="cfg-map__add"
@@ -1246,7 +1249,7 @@ function renderMapField(params: {
       </div>
 
       ${visibleEntries.length === 0
-        ? html` <div class="cfg-map__empty">No custom entries.</div> `
+        ? html` <div class="cfg-map__empty">${t("configPage.form.noCustomEntries")}</div> `
         : html`
             <div class="cfg-map__items">
               ${visibleEntries.map(([key, entryValue]) => {
@@ -1266,7 +1269,7 @@ function renderMapField(params: {
                         <input
                           type="text"
                           class="cfg-input cfg-input--sm"
-                          placeholder="Key"
+                          placeholder=${t("configPage.form.keyPlaceholder")}
                           .value=${key}
                           ?disabled=${disabled}
                           @change=${(e: Event) => {
@@ -1287,7 +1290,7 @@ function renderMapField(params: {
                       <button
                         type="button"
                         class="cfg-map__item-remove"
-                        title="Remove entry"
+                        title=${t("configPage.form.removeEntry")}
                         ?disabled=${disabled}
                         @click=${() => {
                           const next = { ...value };
@@ -1308,7 +1311,7 @@ function renderMapField(params: {
                                   : ""}"
                                 placeholder=${sensitiveState.isRedacted
                                   ? REDACTED_PLACEHOLDER
-                                  : "JSON value"}
+                                  : t("configPage.form.jsonValue")}
                                 rows="2"
                                 .value=${sensitiveState.isRedacted ? "" : fallback}
                                 ?disabled=${disabled}

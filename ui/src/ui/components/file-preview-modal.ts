@@ -1,6 +1,7 @@
 // Control UI component implements the file preview modal element.
 import { LitElement, css, html, type PropertyValues } from "lit";
 import { property, query } from "lit/decorators.js";
+import { t } from "../../i18n/index.ts";
 import { icons } from "../icons.ts";
 
 export type FilePreviewModalFile = {
@@ -382,8 +383,11 @@ export class OpenClawFilePreviewModal extends LitElement {
     const activeFile = this.resolveActiveFile(filteredFiles);
     const fileCount =
       filteredFiles.length === this.files.length
-        ? `${this.files.length} files`
-        : `${filteredFiles.length}/${this.files.length} files`;
+        ? t("filePreview.fileCount", { count: String(this.files.length) })
+        : t("filePreview.fileCountFiltered", {
+            shown: String(filteredFiles.length),
+            total: String(this.files.length),
+          });
 
     return html`
       <div class="backdrop" @click=${this.emitClose}></div>
@@ -404,13 +408,13 @@ export class OpenClawFilePreviewModal extends LitElement {
             @input=${this.handleQueryInput}
             autofocus
           />
-          <span class="state">${fileCount} <span class="esc">esc</span></span>
+          <span class="state">${fileCount} <span class="esc">${t("filePreview.escHint")}</span></span>
         </header>
         <div class="body">
           <aside class="list">
             <div class="list-section">${this.listLabel} · ${filteredFiles.length}</div>
             ${filteredFiles.length === 0
-              ? html`<div class="empty-list">No files match.</div>`
+              ? html`<div class="empty-list">${t("filePreview.noListMatch")}</div>`
               : filteredFiles.map(
                   (file) => html`
                     <button
@@ -429,10 +433,10 @@ export class OpenClawFilePreviewModal extends LitElement {
           ${activeFile ? this.renderFile(activeFile) : this.renderEmpty()}
         </div>
         <footer class="foot">
-          <span class="foot-group"><span class="kbd">↑↓</span> navigate</span>
+          <span class="foot-group"><span class="kbd">↑↓</span> ${t("filePreview.navigateHint")}</span>
           <span class="spacer"></span>
           <button class="button" @click=${this.emitClose}>
-            Close <span class="kbd">esc</span>
+            ${t("filePreview.close")} <span class="kbd">${t("filePreview.escHint")}</span>
           </button>
         </footer>
       </div>

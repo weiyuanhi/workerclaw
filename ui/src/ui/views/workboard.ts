@@ -70,49 +70,37 @@ const FOCUSABLE_SELECTOR = [
 let activeWorkboardDialog: HTMLElement | null = null;
 let workboardReturnFocusTarget: Element | null = null;
 
-const WORKBOARD_TEMPLATES: Array<{
+const WORKBOARD_TEMPLATE_IDS: WorkboardTemplateId[] = [
+  "bugfix",
+  "docs",
+  "release",
+  "pr_review",
+  "plugin",
+];
+
+const WORKBOARD_TEMPLATE_PRIORITIES: Record<WorkboardTemplateId, WorkboardPriority> = {
+  bugfix: "high",
+  docs: "normal",
+  release: "urgent",
+  pr_review: "normal",
+  plugin: "normal",
+};
+
+function getWorkboardTemplates(): Array<{
   id: WorkboardTemplateId;
   title: string;
   notes: string;
   labels: string;
   priority: WorkboardPriority;
-}> = [
-  {
-    id: "bugfix",
-    title: "Fix: ",
-    notes: "Symptom:\nCause:\nAcceptance:\nProof:",
-    labels: "fix, test",
-    priority: "high",
-  },
-  {
-    id: "docs",
-    title: "Docs: ",
-    notes: "Page:\nChange:\nSource proof:",
-    labels: "docs",
-    priority: "normal",
-  },
-  {
-    id: "release",
-    title: "Release: ",
-    notes: "Scope:\nVerification:\nCloseout:",
-    labels: "release",
-    priority: "urgent",
-  },
-  {
-    id: "pr_review",
-    title: "Review PR ",
-    notes: "Surface:\nRisks:\nProof:",
-    labels: "review",
-    priority: "normal",
-  },
-  {
-    id: "plugin",
-    title: "Plugin: ",
-    notes: "Boundary:\nConfig/docs:\nTests:",
-    labels: "plugin",
-    priority: "normal",
-  },
-];
+}> {
+  return WORKBOARD_TEMPLATE_IDS.map((id) => ({
+    id,
+    title: t(`workboard.templateDefaults.${id}.title`),
+    notes: t(`workboard.templateDefaults.${id}.notes`),
+    labels: t(`workboard.templateDefaults.${id}.labels`),
+    priority: WORKBOARD_TEMPLATE_PRIORITIES[id],
+  }));
+}
 
 function formatStatusLabel(status: WorkboardStatus): string {
   return t(`workboard.status.${status}`);
@@ -587,7 +575,7 @@ function renderAgentChip(props: WorkboardProps, card: WorkboardCard) {
 function renderEngineMark(engine: WorkboardExecutionEngine) {
   return html`
     <span class="workboard-engine-mark workboard-engine-mark--${engine}" aria-hidden="true">
-      ${engine === "codex" ? "OpenAI" : "Claude"}
+      ${engineDisplayName(engine)}
     </span>
   `;
 }
@@ -716,7 +704,7 @@ function openEditModal(state: WorkboardUiState, card: WorkboardCard) {
 }
 
 function applyTemplate(state: WorkboardUiState, templateId: WorkboardTemplateId) {
-  const template = WORKBOARD_TEMPLATES.find((entry) => entry.id === templateId);
+  const template = getWorkboardTemplates().find((entry) => entry.id === templateId);
   if (!template) {
     return;
   }
@@ -799,7 +787,7 @@ function renderCardModal(props: WorkboardProps) {
         ${!editing
           ? html`
               <div class="workboard-template-strip" aria-label=${t("workboard.templatesLabel")}>
-                ${WORKBOARD_TEMPLATES.map(
+                ${getWorkboardTemplates().map(
                   (template) => html`
                     <button
                       class="btn btn--xs ${state.draftTemplateId === template.id
