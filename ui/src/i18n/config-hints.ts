@@ -1,11 +1,32 @@
-// Resolves localized config form labels/help for AI & Agents settings sections.
+// Resolves localized config form labels/help for infrastructure and AI settings sections.
 import type { Locale } from "./lib/types.ts";
 import { i18n } from "./lib/translate.ts";
-import { CONFIG_HINTS_BY_LOCALE, CONFIG_HINTS_EN, type ConfigHintMaps } from "./generated/config-hints.ts";
+import {
+  CONFIG_HINTS_BY_LOCALE,
+  CONFIG_HINTS_EN,
+  translateConfigHintZh,
+  type ConfigHintMaps,
+} from "./generated/config-hints.ts";
 
-const SECTION_PREFIXES = ["agents", "models", "skills", "tools", "memory", "session"];
+const SECTION_PREFIXES = [
+  "agents",
+  "models",
+  "skills",
+  "tools",
+  "memory",
+  "session",
+  "plugins",
+  "acp",
+  "gateway",
+  "web",
+  "browser",
+  "nodeHost",
+  "discovery",
+  "media",
+  "mcp",
+];
 
-function isAiAgentsHintPath(path: string): boolean {
+function isLocalizableConfigHintPath(path: string): boolean {
   return SECTION_PREFIXES.some((prefix) => path === prefix || path.startsWith(`${prefix}.`));
 }
 
@@ -18,7 +39,7 @@ export function localizeConfigHint(
   kind: keyof ConfigHintMaps,
   fallback: string | undefined,
 ): string | undefined {
-  if (!fallback || !isAiAgentsHintPath(path)) {
+  if (!fallback || !isLocalizableConfigHintPath(path)) {
     return fallback;
   }
   const locale = i18n.getLocale();
@@ -27,7 +48,14 @@ export function localizeConfigHint(
     return localized;
   }
   if (locale !== "en") {
-    return CONFIG_HINTS_EN[kind][path] ?? fallback;
+    const enLocalized = CONFIG_HINTS_EN[kind][path];
+    if (enLocalized) {
+      return locale === "zh-CN" ? translateConfigHintZh(enLocalized) : enLocalized;
+    }
+    if (locale === "zh-CN") {
+      return translateConfigHintZh(fallback);
+    }
+    return fallback;
   }
   return fallback;
 }

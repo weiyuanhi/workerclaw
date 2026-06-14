@@ -37,6 +37,9 @@ export type ConfigState = {
   configSearchQuery: string;
   configActiveSection: string | null;
   configActiveSubsection: string | null;
+  acpCatalogLoading: boolean;
+  acpCatalog: import("../../../../src/shared/acp-setup-catalog.ts").AcpSetupCatalog | null;
+  acpCatalogError: string | null;
   pendingUpdateExpectedVersion: string | null;
   updateStatusBanner: { tone: "danger" | "warn" | "info"; text: string } | null;
   lastError: string | null;

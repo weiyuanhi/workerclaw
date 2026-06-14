@@ -15,6 +15,8 @@ export default definePluginEntry({
     registerAppiumCli(api);
     api.registerService({
       id: "appium-server",
+      // Appium starts on demand via ensureAppiumServer when tools/commands run.
+      start: async () => {},
       stop: async () => {
         await stopManagedAppiumServer();
       },

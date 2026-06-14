@@ -51,6 +51,7 @@ import {
   type ModelAuthStatusState,
 } from "./controllers/model-auth-status.ts";
 import { refreshConfiguredModelCatalog } from "./controllers/models.ts";
+import { refreshAcpCatalog } from "./controllers/acp-catalog.ts";
 import { loadNodes, type NodesState } from "./controllers/nodes.ts";
 import { loadPresence, type PresenceState } from "./controllers/presence.ts";
 import { loadSessions, type SessionsState } from "./controllers/sessions.ts";
@@ -436,6 +437,7 @@ export async function refreshActiveTab(host: SettingsHost, opts?: { chatStartup?
             loadConfig(app),
             loadModelAuthStatusState(app),
             refreshConfiguredModelCatalog(app),
+            refreshAcpCatalog(app),
           ]);
           loadConfigSchemaAfterPrimary(host, app, primaryRefresh);
           await primaryRefresh;

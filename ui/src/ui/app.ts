@@ -382,6 +382,9 @@ export class OpenClawApp extends LitElement {
   @state() configUiHints: ConfigUiHints = {};
   @state() configForm: Record<string, unknown> | null = null;
   @state() configFormOriginal: Record<string, unknown> | null = null;
+  @state() acpCatalogLoading = false;
+  @state() acpCatalog: import("../../../src/shared/acp-setup-catalog.ts").AcpSetupCatalog | null = null;
+  @state() acpCatalogError: string | null = null;
   @state() selectedAgentId: string | null = null;
   @state() dreamingStatusLoading = false;
   @state() dreamingStatusError: string | null = null;

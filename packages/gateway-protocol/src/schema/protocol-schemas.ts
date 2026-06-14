@@ -7,6 +7,10 @@
  */
 import type { TSchema } from "typebox";
 import {
+  AcpCatalogParamsSchema,
+  AcpCatalogResultSchema,
+} from "./acp.js";
+import {
   AgentEventSchema,
   AgentIdentityParamsSchema,
   AgentIdentityResultSchema,
@@ -426,6 +430,8 @@ export const ProtocolSchemas = {
   TalkEvent: TalkEventSchema,
   TalkCatalogParams: TalkCatalogParamsSchema,
   TalkCatalogResult: TalkCatalogResultSchema,
+  AcpCatalogParams: AcpCatalogParamsSchema,
+  AcpCatalogResult: AcpCatalogResultSchema,
   TalkClientCreateParams: TalkClientCreateParamsSchema,
   TalkClientCreateResult: TalkClientCreateResultSchema,
   TalkClientSteerParams: TalkClientSteerParamsSchema,

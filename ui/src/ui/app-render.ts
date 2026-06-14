@@ -128,6 +128,7 @@ import {
   logoutModelProvider,
 } from "./controllers/model-auth-status.ts";
 import { refreshConfiguredModelCatalog } from "./controllers/models.ts";
+import { refreshAcpCatalog } from "./controllers/acp-catalog.ts";
 import { loadNodes } from "./controllers/nodes.ts";
 import { loadPresence } from "./controllers/presence.ts";
 import {
@@ -1611,7 +1612,10 @@ export function renderApp(state: AppViewState) {
     onApply: () =>
       void applyConfig(state).then(async (applied) => {
         if (applied && state.client && state.connected) {
-          await refreshConfiguredModelCatalog(state);
+          await Promise.all([
+            refreshConfiguredModelCatalog(state),
+            refreshAcpCatalog(state),
+          ]);
           requestHostUpdate();
         }
       }),
@@ -1645,6 +1649,10 @@ export function renderApp(state: AppViewState) {
       typeof state.configSnapshot?.raw === "string" ||
       Boolean(state.configSnapshot?.config) ||
       Boolean(state.configForm),
+    acpCatalog: state.acpCatalog,
+    acpCatalogLoading: state.acpCatalogLoading,
+    acpCatalogError: state.acpCatalogError,
+    defaultAgentId: state.agentsList?.defaultId ?? null,
     modelAuthProviders: state.modelAuthStatusResult?.providers,
     modelCatalog: state.chatModelCatalog ?? [],
     onRemoveModelProvider: async (providerId: string) => {
@@ -2066,6 +2074,9 @@ export function renderApp(state: AppViewState) {
           onSectionChange: (section) => {
             state.infrastructureActiveSection = section;
             state.infrastructureActiveSubsection = null;
+            if (section === "acp") {
+              void refreshAcpCatalog(state).then(() => requestHostUpdate());
+            }
           },
           onSubsectionChange: (section) => (state.infrastructureActiveSubsection = section),
           navRootLabel: t("tabs.infrastructure"),

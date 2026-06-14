@@ -68,6 +68,10 @@ import {
   TalkCatalogParamsSchema,
   type TalkCatalogResult,
   TalkCatalogResultSchema,
+  type AcpCatalogParams,
+  AcpCatalogParamsSchema,
+  type AcpCatalogResult,
+  AcpCatalogResultSchema,
   type TalkClientCreateParams,
   TalkClientCreateParamsSchema,
   type TalkClientCreateResult,
@@ -698,6 +702,8 @@ export const validateTalkModeParams = lazyCompile<TalkModeParams>(TalkModeParams
 export const validateTalkEvent = lazyCompile<TalkEvent>(TalkEventSchema);
 export const validateTalkCatalogParams = lazyCompile<TalkCatalogParams>(TalkCatalogParamsSchema);
 export const validateTalkCatalogResult = lazyCompile<TalkCatalogResult>(TalkCatalogResultSchema);
+export const validateAcpCatalogParams = lazyCompile<AcpCatalogParams>(AcpCatalogParamsSchema);
+export const validateAcpCatalogResult = lazyCompile<AcpCatalogResult>(AcpCatalogResultSchema);
 export const validateTalkConfigParams = lazyCompile<TalkConfigParams>(TalkConfigParamsSchema);
 export const validateTalkConfigResult = lazyCompile<TalkConfigResult>(TalkConfigResultSchema);
 export const validateTalkClientCreateParams = lazyCompile<TalkClientCreateParams>(
@@ -1063,6 +1069,8 @@ export {
   TalkEventSchema,
   TalkCatalogParamsSchema,
   TalkCatalogResultSchema,
+  AcpCatalogParamsSchema,
+  AcpCatalogResultSchema,
   TalkClientCreateParamsSchema,
   TalkClientCreateResultSchema,
   TalkAgentControlResultSchema,
@@ -1221,6 +1229,8 @@ export type {
   WizardStatusResult,
   TalkCatalogParams,
   TalkCatalogResult,
+  AcpCatalogParams,
+  AcpCatalogResult,
   TalkClientCreateParams,
   TalkClientCreateResult,
   TalkClientSteerParams,

@@ -64,6 +64,32 @@ export function registerAcpRuntimeBackend(backend: AcpRuntimeBackend): void {
   });
 }
 
+export type AcpRuntimeBackendSummary = {
+  id: string;
+  healthy: boolean | null;
+};
+
+function resolveBackendHealth(backend: AcpRuntimeBackend): boolean | null {
+  if (!backend.healthy) {
+    return null;
+  }
+  try {
+    return backend.healthy();
+  } catch {
+    return false;
+  }
+}
+
+/** Lists registered ACP runtime backends for setup catalogs and diagnostics. */
+export function listAcpRuntimeBackendSummaries(): AcpRuntimeBackendSummary[] {
+  return [...ACP_BACKENDS_BY_ID.values()]
+    .map((backend) => ({
+      id: backend.id,
+      healthy: resolveBackendHealth(backend),
+    }))
+    .toSorted((left, right) => left.id.localeCompare(right.id));
+}
+
 /** Removes a registered ACP runtime backend by id. */
 export function unregisterAcpRuntimeBackend(id: string): void {
   const normalized = normalizeOptionalLowercaseString(id) || "";

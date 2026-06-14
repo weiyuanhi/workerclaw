@@ -23,6 +23,8 @@ import {
   type JsonSchema,
 } from "./config-form.shared.ts";
 import { analyzeConfigSchema, renderConfigForm, resolveConfigSectionMeta } from "./config-form.ts";
+import { renderAcpConfigSection } from "./config-acp.ts";
+import { mergeAcpCatalogWithForm } from "../controllers/acp-catalog.ts";
 import { renderMemoryConfigSection } from "./config-memory.ts";
 
 function localizedBorderRadiusLabel(stop: BorderRadiusStop): string {
@@ -136,6 +138,10 @@ export type ConfigProps = {
   modelAuthProviders?: import("../types.ts").ModelAuthStatusProvider[];
   modelCatalog?: import("../types.ts").ModelCatalogEntry[];
   onRemoveModelProvider?: (providerId: string) => void | Promise<void>;
+  acpCatalog?: import("../../../../src/shared/acp-setup-catalog.ts").AcpSetupCatalog | null;
+  acpCatalogLoading?: boolean;
+  acpCatalogError?: string | null;
+  defaultAgentId?: string | null;
 };
 
 // SVG Icons for sidebar (Lucide-style)
@@ -1856,39 +1862,54 @@ export function renderConfig(props: ConfigProps) {
                             <span>${t("configPage.loadingSchema")}</span>
                           </div>
                         `
-                      : props.activeSection === "memory" && !props.searchQuery.trim()
-                        ? renderMemoryConfigSection({
+                      : props.activeSection === "acp" && !props.searchQuery.trim()
+                        ? renderAcpConfigSection({
                             schema: analysis.schema,
                             uiHints: props.uiHints,
                             value: props.formValue,
                             disabled: props.loading || !props.formValue,
                             unsupportedPaths: analysis.unsupportedPaths,
+                            catalog: mergeAcpCatalogWithForm(props.acpCatalog, props.formValue),
+                            catalogLoading: props.acpCatalogLoading,
+                            catalogError: props.acpCatalogError,
+                            defaultAgentId: props.defaultAgentId,
                             onPatch: props.onFormPatch,
                             onSectionChange: props.onSectionChange,
+                            onRequestUpdate: requestUpdate,
                           })
-                        : renderConfigForm({
-                          schema: analysis.schema,
-                          uiHints: props.uiHints,
-                          value: props.formValue,
-                          rawAvailable,
-                          disabled: props.loading || !props.formValue,
-                          unsupportedPaths: analysis.unsupportedPaths,
-                          onPatch: props.onFormPatch,
-                          searchQuery: props.searchQuery,
-                          activeSection: props.activeSection,
-                          activeSubsection: effectiveSubsection,
-                          revealSensitive:
-                            props.activeSection === "env" ? envSensitiveVisible : false,
-                          isSensitivePathRevealed,
-                          onToggleSensitivePath: (path) => {
-                            toggleSensitivePathReveal(path);
-                            requestUpdate();
-                          },
-                          onRequestUpdate: requestUpdate,
-                          modelAuthProviders: props.modelAuthProviders,
-                          modelCatalog: props.modelCatalog,
-                          onRemoveModelProvider: props.onRemoveModelProvider,
-                        })}
+                        : props.activeSection === "memory" && !props.searchQuery.trim()
+                          ? renderMemoryConfigSection({
+                              schema: analysis.schema,
+                              uiHints: props.uiHints,
+                              value: props.formValue,
+                              disabled: props.loading || !props.formValue,
+                              unsupportedPaths: analysis.unsupportedPaths,
+                              onPatch: props.onFormPatch,
+                              onSectionChange: props.onSectionChange,
+                            })
+                          : renderConfigForm({
+                              schema: analysis.schema,
+                              uiHints: props.uiHints,
+                              value: props.formValue,
+                              rawAvailable,
+                              disabled: props.loading || !props.formValue,
+                              unsupportedPaths: analysis.unsupportedPaths,
+                              onPatch: props.onFormPatch,
+                              searchQuery: props.searchQuery,
+                              activeSection: props.activeSection,
+                              activeSubsection: effectiveSubsection,
+                              revealSensitive:
+                                props.activeSection === "env" ? envSensitiveVisible : false,
+                              isSensitivePathRevealed,
+                              onToggleSensitivePath: (path) => {
+                                toggleSensitivePathReveal(path);
+                                requestUpdate();
+                              },
+                              onRequestUpdate: requestUpdate,
+                              modelAuthProviders: props.modelAuthProviders,
+                              modelCatalog: props.modelCatalog,
+                              onRemoveModelProvider: props.onRemoveModelProvider,
+                            })}
                   `
                 : (() => {
                     const sensitiveCount = countSensitiveConfigValues(

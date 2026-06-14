@@ -181,6 +181,10 @@ const loadToolsCatalogHandlers = lazyHandlerModule(
   () => import("./server-methods/tools-catalog.js"),
   (module) => module.toolsCatalogHandlers,
 );
+const loadAcpCatalogHandlers = lazyHandlerModule(
+  () => import("./server-methods/acp-catalog.js"),
+  (module) => module.acpCatalogHandlers,
+);
 const loadToolsEffectiveHandlers = lazyHandlerModule(
   () => import("./server-methods/tools-effective.js"),
   (module) => module.toolsEffectiveHandlers,
@@ -414,6 +418,10 @@ export const coreGatewayHandlers: GatewayRequestHandlers = {
   ...createLazyCoreHandlers({
     methods: ["tools.catalog"],
     loadHandlers: loadToolsCatalogHandlers,
+  }),
+  ...createLazyCoreHandlers({
+    methods: ["acp.catalog"],
+    loadHandlers: loadAcpCatalogHandlers,
   }),
   ...createLazyCoreHandlers({
     methods: ["tools.effective"],
