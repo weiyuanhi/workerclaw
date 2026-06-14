@@ -128,7 +128,7 @@ import {
   logoutModelProvider,
 } from "./controllers/model-auth-status.ts";
 import { refreshConfiguredModelCatalog } from "./controllers/models.ts";
-import { refreshAcpCatalog } from "./controllers/acp-catalog.ts";
+import { refreshAcpCatalog, startAcpHarnessLogin } from "./controllers/acp-catalog.ts";
 import { loadNodes } from "./controllers/nodes.ts";
 import { loadPresence } from "./controllers/presence.ts";
 import {
@@ -1652,6 +1652,13 @@ export function renderApp(state: AppViewState) {
     acpCatalog: state.acpCatalog,
     acpCatalogLoading: state.acpCatalogLoading,
     acpCatalogError: state.acpCatalogError,
+    onAcpCatalogRefresh: () =>
+      void refreshAcpCatalog(state).then(() => requestHostUpdate()),
+    acpHarnessLoginBusy: state.acpHarnessLoginBusy,
+    acpHarnessLoginMessage: state.acpHarnessLoginMessage,
+    acpHarnessLoginHarnessId: state.acpHarnessLoginHarnessId,
+    onAcpHarnessLogin: (harnessId: string) =>
+      void startAcpHarnessLogin(state, harnessId).then(() => requestHostUpdate()),
     defaultAgentId: state.agentsList?.defaultId ?? null,
     modelAuthProviders: state.modelAuthStatusResult?.providers,
     modelCatalog: state.chatModelCatalog ?? [],

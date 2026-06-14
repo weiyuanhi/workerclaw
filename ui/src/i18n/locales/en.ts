@@ -2607,6 +2607,35 @@ export const en: TranslationMap = {
       acpCwdOverrideHint:
         "Leave empty to use the agent workspace shown above. Set a path here to override it for ACP bindings only.",
       goToAgents: "Open agent settings",
+      harnessAuth: {
+        harnessTitle: "{harnessName} login",
+        harnessHint:
+          "Harness sessions need CLI login or API keys on the Gateway host. Backend health alone does not confirm harness auth.",
+        cursorTitle: "Cursor login",
+        cursorHint:
+          "Cursor harness sessions require Cursor CLI login or CURSOR_API_KEY. Backend health alone does not confirm Cursor auth.",
+        statusUnknown: "Login status unavailable until Gateway refreshes the ACP catalog.",
+        refreshing: "Refreshing…",
+        refresh: "Refresh status",
+        loginBrowser: "Sign in with browser",
+        loginStarting: "Starting login…",
+        apiKeyLabel: "CURSOR_API_KEY",
+        apiKeyHint:
+          "Optional API key auth for Cursor CLI. Saved under Core → Environment → env.vars and applied after Gateway restart.",
+        apiKeyPlaceholder: "Paste Cursor API key",
+        copyLoginCommand: "Copy login command",
+        openEnv: "Open environment settings",
+        terminalHint:
+          "The browser opens on the Gateway host, not in this Control UI tab. After sign-in, click Refresh status. Manual fallback: {command}",
+        status: {
+          logged_in: "Logged in",
+          logged_out: "Not logged in",
+          api_key: "API key configured",
+          missing_cli: "CLI not found",
+          probe_failed: "Status check failed",
+          unsupported: "Unsupported",
+        },
+      },
     },
     connection: {
       title: "Connection",

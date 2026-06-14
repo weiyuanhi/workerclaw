@@ -11,6 +11,9 @@ export type AcpCatalogState = {
   acpCatalogLoading: boolean;
   acpCatalog: AcpSetupCatalog | null;
   acpCatalogError: string | null;
+  acpHarnessLoginBusy?: boolean;
+  acpHarnessLoginMessage?: string | null;
+  acpHarnessLoginHarnessId?: string | null;
 };
 
 export function resolveLocalAcpSetupCatalog(
@@ -49,6 +52,32 @@ export async function refreshAcpCatalog(state: AcpCatalogState): Promise<void> {
     state.acpCatalog = local;
   } finally {
     state.acpCatalogLoading = false;
+  }
+}
+
+export async function startAcpHarnessLogin(
+  state: AcpCatalogState,
+  harnessId: string,
+): Promise<void> {
+  if (!state.client || !state.connected) {
+    state.acpHarnessLoginMessage = "Gateway is not connected.";
+    return;
+  }
+  state.acpHarnessLoginBusy = true;
+  state.acpHarnessLoginMessage = null;
+  state.acpHarnessLoginHarnessId = harnessId;
+  try {
+    const result = await state.client.request<{
+      harnessId: string;
+      started: boolean;
+      message: string;
+    }>("acp.harnessAuth.login", { harnessId });
+    state.acpHarnessLoginMessage = result.message;
+  } catch (error) {
+    state.acpHarnessLoginMessage = error instanceof Error ? error.message : String(error);
+  } finally {
+    state.acpHarnessLoginBusy = false;
+    state.acpHarnessLoginHarnessId = null;
   }
 }
 

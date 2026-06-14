@@ -420,7 +420,7 @@ export const coreGatewayHandlers: GatewayRequestHandlers = {
     loadHandlers: loadToolsCatalogHandlers,
   }),
   ...createLazyCoreHandlers({
-    methods: ["acp.catalog"],
+    methods: ["acp.catalog", "acp.harnessAuth.login"],
     loadHandlers: loadAcpCatalogHandlers,
   }),
   ...createLazyCoreHandlers({

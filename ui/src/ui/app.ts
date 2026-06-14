@@ -385,6 +385,9 @@ export class OpenClawApp extends LitElement {
   @state() acpCatalogLoading = false;
   @state() acpCatalog: import("../../../src/shared/acp-setup-catalog.ts").AcpSetupCatalog | null = null;
   @state() acpCatalogError: string | null = null;
+  @state() acpHarnessLoginBusy = false;
+  @state() acpHarnessLoginMessage: string | null = null;
+  @state() acpHarnessLoginHarnessId: string | null = null;
   @state() selectedAgentId: string | null = null;
   @state() dreamingStatusLoading = false;
   @state() dreamingStatusError: string | null = null;

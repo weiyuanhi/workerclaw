@@ -2560,6 +2560,35 @@ export const zh_CN: TranslationMap = {
       acpCwdEffectiveMissing: "当前未检测到 Agent 工作区。ACP 绑定将缺少默认目录，请先在代理设置中配置工作区。",
       acpCwdOverrideHint: "留空则使用上方显示的 Agent 工作区路径。填写后将覆盖 Agent 工作区，仅用于 ACP 绑定。",
       goToAgents: "打开代理设置",
+      harnessAuth: {
+        harnessTitle: "{harnessName} 登录",
+        harnessHint:
+          "Harness 会话需要在 Gateway 主机完成 CLI 登录或配置 API Key。后端健康并不代表该 Harness 已认证。",
+        cursorTitle: "Cursor 登录",
+        cursorHint:
+          "使用 Cursor harness 需要先完成 Cursor CLI 登录，或配置 CURSOR_API_KEY。后端健康并不代表 Cursor 已认证。",
+        statusUnknown: "尚未从 Gateway 获取登录状态，请刷新 ACP 目录。",
+        refreshing: "刷新中…",
+        refresh: "刷新状态",
+        loginBrowser: "浏览器登录",
+        loginStarting: "正在启动登录…",
+        apiKeyLabel: "CURSOR_API_KEY",
+        apiKeyHint:
+          "可选：用 API Key 认证 Cursor CLI。保存在「核心 → 环境变量 → env.vars」，保存配置并重启 Gateway 后生效。",
+        apiKeyPlaceholder: "粘贴 Cursor API Key",
+        copyLoginCommand: "复制登录命令",
+        openEnv: "打开环境变量设置",
+        terminalHint:
+          "浏览器会在 Gateway 所在主机上打开，而不是在当前 Control UI 标签页。完成登录后请点击「刷新状态」。手动备用方案：{command}",
+        status: {
+          logged_in: "已登录",
+          logged_out: "未登录",
+          api_key: "已配置 API Key",
+          missing_cli: "未找到 CLI",
+          probe_failed: "状态检查失败",
+          unsupported: "不支持",
+        },
+      },
     },
     connection: {
       title: "连接",

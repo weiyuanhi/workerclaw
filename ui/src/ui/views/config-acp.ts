@@ -10,6 +10,7 @@ import {
   renderAcpBackendPicker,
   renderAcpDefaultAgentPicker,
 } from "./config-acp-pickers.ts";
+import { renderAcpHarnessAuthSection } from "./config-acp-harness-auth.ts";
 import { renderAcpWorkspaceSection } from "./config-acp-workspace.ts";
 
 export type AcpConfigSectionProps = {
@@ -25,6 +26,10 @@ export type AcpConfigSectionProps = {
   onPatch: (path: Array<string | number>, value: unknown) => void;
   onSectionChange?: (section: string | null) => void;
   onRequestUpdate?: () => void;
+  loginBusy?: boolean;
+  loginMessage?: string | null;
+  loginHarnessId?: string | null;
+  onLogin?: (harnessId: string) => void | Promise<void>;
 };
 
 type AcpRecord = Record<string, unknown>;
@@ -239,6 +244,19 @@ export function renderAcpConfigSection(props: AcpConfigSectionProps): TemplateRe
         disabled: props.disabled,
         onPatch: props.onPatch,
         onSectionChange: props.onSectionChange,
+      })}
+      ${renderAcpHarnessAuthSection({
+        catalog: props.catalog,
+        catalogLoading: props.catalogLoading,
+        value: props.value,
+        disabled: props.disabled,
+        onPatch: props.onPatch,
+        onRequestUpdate: props.onRequestUpdate,
+        onSectionChange: props.onSectionChange,
+        loginBusy: props.loginBusy,
+        loginMessage: props.loginMessage,
+        loginHarnessId: props.loginHarnessId,
+        onLogin: props.onLogin,
       })}
       ${renderPluginCallout(props)}
       <details class="config-memory-advanced">

@@ -141,6 +141,11 @@ export type ConfigProps = {
   acpCatalog?: import("../../../../src/shared/acp-setup-catalog.ts").AcpSetupCatalog | null;
   acpCatalogLoading?: boolean;
   acpCatalogError?: string | null;
+  onAcpCatalogRefresh?: () => void | Promise<void>;
+  acpHarnessLoginBusy?: boolean;
+  acpHarnessLoginMessage?: string | null;
+  acpHarnessLoginHarnessId?: string | null;
+  onAcpHarnessLogin?: (harnessId: string) => void | Promise<void>;
   defaultAgentId?: string | null;
 };
 
@@ -1875,7 +1880,13 @@ export function renderConfig(props: ConfigProps) {
                             defaultAgentId: props.defaultAgentId,
                             onPatch: props.onFormPatch,
                             onSectionChange: props.onSectionChange,
-                            onRequestUpdate: requestUpdate,
+                            onRequestUpdate:
+                              props.onAcpCatalogRefresh ??
+                              requestUpdate,
+                            loginBusy: props.acpHarnessLoginBusy,
+                            loginMessage: props.acpHarnessLoginMessage,
+                            loginHarnessId: props.acpHarnessLoginHarnessId,
+                            onLogin: props.onAcpHarnessLogin,
                           })
                         : props.activeSection === "memory" && !props.searchQuery.trim()
                           ? renderMemoryConfigSection({

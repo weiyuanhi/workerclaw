@@ -72,6 +72,10 @@ import {
   AcpCatalogParamsSchema,
   type AcpCatalogResult,
   AcpCatalogResultSchema,
+  type AcpHarnessAuthLoginParams,
+  AcpHarnessAuthLoginParamsSchema,
+  type AcpHarnessAuthLoginResult,
+  AcpHarnessAuthLoginResultSchema,
   type TalkClientCreateParams,
   TalkClientCreateParamsSchema,
   type TalkClientCreateResult,
@@ -704,6 +708,12 @@ export const validateTalkCatalogParams = lazyCompile<TalkCatalogParams>(TalkCata
 export const validateTalkCatalogResult = lazyCompile<TalkCatalogResult>(TalkCatalogResultSchema);
 export const validateAcpCatalogParams = lazyCompile<AcpCatalogParams>(AcpCatalogParamsSchema);
 export const validateAcpCatalogResult = lazyCompile<AcpCatalogResult>(AcpCatalogResultSchema);
+export const validateAcpHarnessAuthLoginParams = lazyCompile<AcpHarnessAuthLoginParams>(
+  AcpHarnessAuthLoginParamsSchema,
+);
+export const validateAcpHarnessAuthLoginResult = lazyCompile<AcpHarnessAuthLoginResult>(
+  AcpHarnessAuthLoginResultSchema,
+);
 export const validateTalkConfigParams = lazyCompile<TalkConfigParams>(TalkConfigParamsSchema);
 export const validateTalkConfigResult = lazyCompile<TalkConfigResult>(TalkConfigResultSchema);
 export const validateTalkClientCreateParams = lazyCompile<TalkClientCreateParams>(
@@ -1071,6 +1081,8 @@ export {
   TalkCatalogResultSchema,
   AcpCatalogParamsSchema,
   AcpCatalogResultSchema,
+  AcpHarnessAuthLoginParamsSchema,
+  AcpHarnessAuthLoginResultSchema,
   TalkClientCreateParamsSchema,
   TalkClientCreateResultSchema,
   TalkAgentControlResultSchema,
@@ -1231,6 +1243,8 @@ export type {
   TalkCatalogResult,
   AcpCatalogParams,
   AcpCatalogResult,
+  AcpHarnessAuthLoginParams,
+  AcpHarnessAuthLoginResult,
   TalkClientCreateParams,
   TalkClientCreateResult,
   TalkClientSteerParams,

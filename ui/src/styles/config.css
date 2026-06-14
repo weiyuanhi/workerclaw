@@ -839,6 +839,74 @@
   margin: 0;
 }
 
+.config-acp-harness-auth__status-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.config-acp-harness-auth__status {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.config-acp-harness-auth__status--ok {
+  color: var(--ok);
+  background: color-mix(in srgb, var(--ok) 14%, transparent);
+}
+
+.config-acp-harness-auth__status--warn {
+  color: var(--warn);
+  background: color-mix(in srgb, var(--warn) 14%, transparent);
+}
+
+.config-acp-harness-auth__status--error {
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 14%, transparent);
+}
+
+.config-acp-harness-auth__message,
+.config-acp-harness-auth__cli {
+  font-size: 12.5px;
+}
+
+.config-acp-harness-auth__field {
+  display: grid;
+  gap: 6px;
+}
+
+.config-acp-harness-auth__label {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.config-acp-harness-auth__field-hint,
+.config-acp-harness-auth__terminal-hint {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
+.config-acp-harness-auth__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.config-acp-harness-auth-list {
+  display: grid;
+  gap: 16px;
+}
+
+.config-acp-harness-auth__message-callout {
+  margin: 0;
+}
+
 .config-memory-advanced__hint {
   margin: 10px 0 0;
   font-size: 12.5px;

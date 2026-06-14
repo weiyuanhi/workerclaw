@@ -236,6 +236,9 @@ export type AppViewState = {
   acpCatalogLoading: boolean;
   acpCatalog: import("../../../../src/shared/acp-setup-catalog.ts").AcpSetupCatalog | null;
   acpCatalogError: string | null;
+  acpHarnessLoginBusy: boolean;
+  acpHarnessLoginMessage: string | null;
+  acpHarnessLoginHarnessId: string | null;
   pendingUpdateExpectedVersion: string | null;
   updateStatusBanner: { tone: "danger" | "warn" | "info"; text: string } | null;
   communicationsFormMode: "form" | "raw";

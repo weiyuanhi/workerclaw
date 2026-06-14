@@ -18,6 +18,8 @@ export const ACPX_BUILTIN_HARNESS_IDS = [
   "qwen",
 ] as const;
 
+export { CURSOR_API_KEY_ENV, CURSOR_HARNESS_ID } from "./acp-harness-auth-spec.js";
+
 /** Known ACP runtime backend ids shown even before plugin registration completes. */
 export const ACP_KNOWN_BACKEND_IDS = ["acpx"] as const;
 
@@ -32,9 +34,27 @@ export type AcpBackendCatalogEntry = {
   healthy: boolean | null;
 };
 
+export type AcpHarnessAuthState =
+  | "logged_in"
+  | "logged_out"
+  | "api_key"
+  | "missing_cli"
+  | "probe_failed"
+  | "unsupported";
+
+export type AcpHarnessAuthEntry = {
+  harnessId: string;
+  state: AcpHarnessAuthState;
+  message?: string;
+  cliCommand?: string;
+  loginCommand?: string;
+  envVar?: string;
+};
+
 export type AcpSetupCatalog = {
   backends: AcpBackendCatalogEntry[];
   harnessIds: string[];
+  harnessAuth?: AcpHarnessAuthEntry[];
 };
 
 type AcpxPluginConfigShape = {
@@ -185,5 +205,6 @@ export function mergeAcpCatalogEntries(params: {
       cfg: params.cfg,
       runtimeHarnessIds: params.remote.harnessIds,
     }),
+    harnessAuth: params.remote.harnessAuth,
   };
 }
