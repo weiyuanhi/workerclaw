@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Generates Control UI config hint label/help maps for infrastructure and AI settings sections.
+// Generates Control UI config hint label/help maps for infrastructure, automation, and AI settings sections.
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import path from "node:path";
@@ -16,6 +16,11 @@ const SECTION_PREFIXES = [
   "session",
   "plugins",
   "acp",
+  "commands",
+  "hooks",
+  "bindings",
+  "cron",
+  "approvals",
   "gateway",
   "web",
   "browser",
@@ -132,6 +137,24 @@ const ZH_GLOSSARY = [
   ["Working directory", "工作目录"],
   ["health checks", "健康检查"],
   ["test commands", "测试命令"],
+  ["Commands", "命令"],
+  ["Native Commands", "原生命令"],
+  ["Native Skill Commands", "原生技能命令"],
+  ["Text Commands", "文本命令"],
+  ["Allow Bash Chat Command", "允许 Bash 聊天命令"],
+  ["Bash Foreground Window (ms)", "Bash 前台窗口（毫秒）"],
+  ["Allow /config", "允许 /config"],
+  ["Allow /mcp", "允许 /mcp"],
+  ["Allow /plugins", "允许 /plugins"],
+  ["Allow /debug", "允许 /debug"],
+  ["Allow Restart", "允许重启"],
+  ["Use Access Groups", "使用访问组"],
+  ["Command Owners", "命令所有者"],
+  ["Owner ID Display", "所有者 ID 显示"],
+  ["Owner ID Hash Secret", "所有者 ID 哈希密钥"],
+  ["Command Elevated Access Rules", "命令提升访问规则"],
+  ["Custom slash commands", "自定义斜杠命令"],
+  ["Scheduled tasks and automation", "计划任务与自动化"],
   ["Folder containing your", "包含您的"],
   ["Session Tools Visibility", "会话工具可见性"],
   ["Session management and persistence", "会话管理与持久化"],

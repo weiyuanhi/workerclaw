@@ -1,4 +1,4 @@
-// Resolves localized config form labels/help for infrastructure and AI settings sections.
+// Resolves localized config form labels/help for infrastructure, automation, and AI settings sections.
 import type { Locale } from "./lib/types.ts";
 import { i18n } from "./lib/translate.ts";
 import {
@@ -17,6 +17,11 @@ const SECTION_PREFIXES = [
   "session",
   "plugins",
   "acp",
+  "commands",
+  "hooks",
+  "bindings",
+  "cron",
+  "approvals",
   "gateway",
   "web",
   "browser",
