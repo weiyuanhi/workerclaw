@@ -69,6 +69,7 @@ import { normalizeBasePath } from "./navigation.ts";
 import {
   areUiSessionKeysEquivalent,
   DEFAULT_AGENT_ID,
+  isAcpSessionKey,
   isUiGlobalSessionKey,
   normalizeAgentId,
   parseAgentSessionKey,
@@ -2320,6 +2321,9 @@ function shouldApplyChatAvatarResult(
 }
 
 function resolveAgentIdForSession(host: ChatHost): string | null {
+  if (isAcpSessionKey(host.sessionKey)) {
+    return resolveUiDefaultAgentId(host);
+  }
   const parsed = parseAgentSessionKey(host.sessionKey);
   if (parsed?.agentId) {
     return parsed.agentId;

@@ -171,9 +171,33 @@ export function areUiSessionKeysEquivalent(
   return Boolean(normalizedLeft && normalizedRight && normalizedLeft === normalizedRight);
 }
 
-export function resolveAgentIdFromSessionKey(sessionKey: string | undefined | null): string {
+export function isAcpSessionKey(sessionKey: string | undefined | null): boolean {
+  const raw = normalizeOptionalString(sessionKey);
+  if (!raw) {
+    return false;
+  }
+  const normalized = normalizeLowercaseStringOrEmpty(raw);
+  if (normalized.startsWith("acp:")) {
+    return true;
+  }
+  const parsed = parseAgentSessionKey(raw);
+  return normalizeOptionalLowercaseString(parsed?.rest)?.startsWith("acp:") === true;
+}
+
+/** OpenClaw agent id for gateway RPCs; ACP keys use harness ids in the key shape. */
+export function resolveUiGatewayAgentIdFromSessionKey(
+  sessionKey: string | undefined | null,
+  defaultAgentId: string = DEFAULT_AGENT_ID,
+): string {
+  if (isAcpSessionKey(sessionKey)) {
+    return normalizeAgentId(defaultAgentId);
+  }
   const parsed = parseAgentSessionKey(sessionKey);
-  return normalizeAgentId(parsed?.agentId ?? DEFAULT_AGENT_ID);
+  return normalizeAgentId(parsed?.agentId ?? defaultAgentId);
+}
+
+export function resolveAgentIdFromSessionKey(sessionKey: string | undefined | null): string {
+  return resolveUiGatewayAgentIdFromSessionKey(sessionKey);
 }
 
 export function isSessionKeyTiedToAgent(

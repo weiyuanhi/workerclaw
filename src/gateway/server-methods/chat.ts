@@ -85,7 +85,7 @@ import { isPluginOwnedSessionBindingRecord } from "../../plugins/conversation-bi
 import { normalizeAgentId, scopeLegacySessionKeyToAgent } from "../../routing/session-key.js";
 import { normalizeInputProvenance, type InputProvenance } from "../../sessions/input-provenance.js";
 import { resolveSendPolicy } from "../../sessions/send-policy.js";
-import { parseAgentSessionKey } from "../../sessions/session-key-utils.js";
+import { isAcpSessionKey, parseAgentSessionKey } from "../../sessions/session-key-utils.js";
 import {
   createUserTurnTranscriptRecorder,
   type UserTurnInput,
@@ -637,6 +637,15 @@ function validateChatSelectedAgent(params: {
   requestedSessionKey: string;
   agentId?: string;
 }): { ok: true; agentId?: string } | { ok: false; error: string } {
+  const requestedSessionKey = params.requestedSessionKey.trim();
+  if (isAcpSessionKey(requestedSessionKey)) {
+    // Free ACP keys use agent:<harnessId>:acp:<uuid>; harness ids are not OpenClaw agents.list ids.
+    const parsed = parseAgentSessionKey(requestedSessionKey);
+    return {
+      ok: true,
+      agentId: parsed ? normalizeAgentId(parsed.agentId) : params.agentId,
+    };
+  }
   const agentId = params.agentId ? normalizeAgentId(params.agentId) : undefined;
   if (!agentId) {
     return { ok: true };
@@ -644,7 +653,6 @@ function validateChatSelectedAgent(params: {
   if (!listAgentIds(params.cfg).includes(agentId)) {
     return { ok: false, error: `Unknown agent id "${params.agentId}"` };
   }
-  const requestedSessionKey = params.requestedSessionKey.trim();
   const parsed = parseAgentSessionKey(requestedSessionKey);
   if (parsed && normalizeAgentId(parsed.agentId) !== agentId) {
     return {
@@ -1146,10 +1154,6 @@ function resolveChatSendOriginatingRoute(params: {
     messageThreadId: routeThreadIdCandidate,
     explicitDeliverRoute: true,
   };
-}
-
-function isAcpSessionKey(sessionKey: string | undefined): boolean {
-  return Boolean(sessionKey?.split(":").includes("acp"));
 }
 
 function explicitOriginTargetsAcpSession(origin: ChatSendExplicitOrigin | undefined): boolean {
